@@ -39,8 +39,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>F:\SPT-AKI\EscapeFromTarkov_Data\Managed\Aki.Reflection.dll</HintPath>
     </Reference>
-    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Assembly-CSharp">
       <HintPath>F:\SPT-AKI\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx, Version=5.4.21.0, Culture=neutral, processorArchitecture=MSIL">
