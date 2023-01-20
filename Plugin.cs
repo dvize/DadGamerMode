@@ -1,19 +1,25 @@
-﻿using BepInEx;
+﻿using Aki.Reflection.Patching;
+using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using Comfort.Common;
 using EFT;
+using EFT.HealthSystem;
+using EFT.InventoryLogic;
 using System;
+using System.Reflection;
+using UnityEngine;
 
-namespace dvize.AILimit
+namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.GodModeTest", "dvize.GodModeTest", "1.1.0")]
+    [BepInPlugin("com.dvize.GodModeTest", "dvize.GodModeTest", "1.2.0")]
 
-    public class Plugin : BaseUnityPlugin
+    public class godModeTest : BaseUnityPlugin
     {
         public ConfigEntry<Boolean> Godmode { get; set; }
-        public ConfigEntry<Boolean> CustomDamageMode { get; set; }
-        public ConfigEntry<int> CustomDamageModeVal { get; set; }
+        public static ConfigEntry<Boolean> CustomDamageMode { get; set; }
+        public static ConfigEntry<int> CustomDamageModeVal { get; set; }
+        public static ConfigEntry<Boolean> IgnoreHeadShotDamage { get; set; }
         public ConfigEntry<Boolean> InstaSearch { get; private set; }
         public ConfigEntry<Boolean> MaxStaminaToggle { get; set; }
         internal void Awake()
@@ -21,8 +27,11 @@ namespace dvize.AILimit
             Godmode = Config.Bind("Player | Health", "Godmode", false, "Invincible");
             MaxStaminaToggle = Config.Bind("Player | Skills", "Infinite Stamina", false, "Stamina Never Drains");
             InstaSearch = Config.Bind("Player | Skills", "Instant Search", false);
-            CustomDamageMode = Config.Bind("Player | Health", "% Damage Received Enabled", false);
             CustomDamageModeVal = Config.Bind("Player | Health", "% Damage Received Value", 100);
+            IgnoreHeadShotDamage = Config.Bind("Player | Health", "Ignore Headshot Damage", false);
+
+            new ApplyDamagePatch().Enable();
+            
         }
 
         public static Player player;
@@ -31,6 +40,7 @@ namespace dvize.AILimit
             if (GClass1748.InRaid)
             {
                 player = Singleton<GameWorld>.Instance.MainPlayer;
+
                 if (Godmode.Value == true)
                 {
                     try
@@ -61,17 +71,7 @@ namespace dvize.AILimit
                     }
                 }
 
-                if (CustomDamageMode.Value == true && Godmode.Value != true)
-                {
-                    try
-                    {
-                        player.PlayerHealthController.SetDamageCoeff((float)(CustomDamageModeVal.Value/100));
-                    }
-                    catch
-                    {
-                        Logger.LogInfo("Error GodMode Off.");
-                    }
-                }
+                
 
                 if (MaxStaminaToggle.Value == true)
                 {
@@ -107,6 +107,34 @@ namespace dvize.AILimit
             
         }
         
+
+    }
+
+    
+    public class ApplyDamagePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ActiveHealthControllerClass).GetMethod("ApplyDamage", BindingFlags.Public | BindingFlags.Instance);
+        }
+
+        [PatchPrefix]
+        public static bool Prefix(ActiveHealthControllerClass __instance, ref float damage, DamageInfo damageInfo, EBodyPart bodyPart)
+        {
+            if (__instance.Player.IsYourPlayer)   
+            {
+                if (bodyPart == EBodyPart.Head && godModeTest.IgnoreHeadShotDamage.Value == true)
+                {
+                    damage = 0f;
+                    return false;
+                }
+
+                float damagePercent = (float)godModeTest.CustomDamageModeVal.Value / 100;
+                damage = damage * damagePercent;
+                
+            }
+            return true;
+        }
 
     }
 }
