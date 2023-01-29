@@ -7,12 +7,13 @@ using EFT;
 using EFT.HealthSystem;
 using EFT.InventoryLogic;
 using System;
+using System.Linq.Expressions;
 using System.Reflection;
 using UnityEngine;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.GodModeTest", "dvize.GodModeTest", "1.2.0")]
+    [BepInPlugin("com.dvize.GodModeTest", "dvize.GodModeTest", "1.2.1")]
 
     public class godModeTest : BaseUnityPlugin
     {
@@ -35,79 +36,90 @@ namespace dvize.GodModeTest
         }
 
         public static Player player;
+        public static AbstractGame game;
         void Update()
         {
-            if (GClass1748.InRaid)
+            try
             {
-                player = Singleton<GameWorld>.Instance.MainPlayer;
+                game = Singleton<AbstractGame>.Instance;
 
-                if (Godmode.Value == true)
+                if (game.InRaid)
                 {
-                    try
-                    {
-                        player.PlayerHealthController.SetDamageCoeff(-1f);
-                        player.PlayerHealthController.FallSafeHeight = 999999f;
-                        //player.PlayerHealthController.ChangeHealth(EBodyPart.Head, 9999999, new DamageInfo());
+                    player = Singleton<GameWorld>.Instance.MainPlayer;
 
-                        player.PlayerHealthController.RemoveNegativeEffects(EBodyPart.Common);
-                        player.PlayerHealthController.RestoreFullHealth();
+                    if (Godmode.Value == true)
+                    {
+                        try
+                        {
+                            player.PlayerHealthController.SetDamageCoeff(-1f);
+                            player.PlayerHealthController.FallSafeHeight = 999999f;
+                            //player.PlayerHealthController.ChangeHealth(EBodyPart.Head, 9999999, new DamageInfo());
+
+                            player.PlayerHealthController.RemoveNegativeEffects(EBodyPart.Common);
+                            player.PlayerHealthController.RestoreFullHealth();
+
+
+
+                        }
+                        catch
+                        {
+                            Logger.LogInfo("Error GodMode On.");
+                        }
 
                     }
-                    catch
-                    {
-                        Logger.LogInfo("Error GodMode On.");
+                    else {
+                        try
+                        {
+                            player.PlayerHealthController.SetDamageCoeff(1f);
+                            player.PlayerHealthController.FallSafeHeight = 1.5f;
+                        }
+                        catch
+                        {
+                            Logger.LogInfo("Error GodMode Off.");
+                        }
                     }
 
-                }
-                else {
-                    try
-                    {
-                        player.PlayerHealthController.SetDamageCoeff(1f);
-                        player.PlayerHealthController.FallSafeHeight = 1.5f;
-                    }
-                    catch
-                    {
-                        Logger.LogInfo("Error GodMode Off.");
-                    }
-                }
 
-                
 
-                if (MaxStaminaToggle.Value == true)
-                {
-                    try
+                    if (MaxStaminaToggle.Value == true)
                     {
-                        player.Physical.Stamina.Current = player.Physical.Stamina.TotalCapacity.Value;
-                        player.Physical.HandsStamina.Current = player.Physical.HandsStamina.TotalCapacity.Value;
-                        player.Physical.Oxygen.Current = player.Physical.Oxygen.TotalCapacity.Value;
+                        try
+                        {
+                            player.Physical.Stamina.Current = player.Physical.Stamina.TotalCapacity.Value;
+                            player.Physical.HandsStamina.Current = player.Physical.HandsStamina.TotalCapacity.Value;
+                            player.Physical.Oxygen.Current = player.Physical.Oxygen.TotalCapacity.Value;
+                        }
+                        catch
+                        {
+                            Logger.LogInfo("Error MaxStamina");
+                        }
                     }
-                    catch
-                    {
-                        Logger.LogInfo("Error MaxStamina");
-                    }
-                }
 
-                if(InstaSearch.Value == true)
-                {
-                    try
+                    if (InstaSearch.Value == true)
                     {
-                        player.Skills.AttentionEliteExtraLootExp.Value = true;
-                        player.Skills.AttentionEliteLuckySearch.Value = 100f;
-                        player.Skills.IntellectEliteContainerScope.Value = true;
+                        try
+                        {
+                            player.Skills.AttentionEliteExtraLootExp.Value = true;
+                            player.Skills.AttentionEliteLuckySearch.Value = 100f;
+                            player.Skills.IntellectEliteContainerScope.Value = true;
+                        }
+                        catch
+                        {
+                            Logger.LogInfo("Error Instasearch");
+                        }
+
                     }
-                    catch
-                    {
-                        Logger.LogInfo("Error Instasearch");
-                    }
-                    
                 }
 
 
             }
-            
-        }
-        
+            catch
+            {
 
+            }
+
+
+        }
     }
 
     
@@ -119,7 +131,7 @@ namespace dvize.GodModeTest
         }
 
         [PatchPrefix]
-        public static bool Prefix(ActiveHealthControllerClass __instance, ref float damage, DamageInfo damageInfo, EBodyPart bodyPart)
+        public static bool Prefix(ActiveHealthControllerClass __instance, ref float damage, EBodyPart bodyPart)
         {
             if (__instance.Player.IsYourPlayer)   
             {
