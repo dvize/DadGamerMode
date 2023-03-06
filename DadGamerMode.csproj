@@ -81,6 +81,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "F:\SPT-AKI\BepInEx\plugins\dvize.GodModeTest.dll"</PostBuildEvent>
+    <PostBuildEvent>copy "$(TargetPath)" "F:\SPT-AKI\BepInEx\plugins\dvize.DadGamerMode.dll"</PostBuildEvent>
   </PropertyGroup>
 </Project>
