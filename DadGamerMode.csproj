@@ -7,8 +7,8 @@
     <ProjectGuid>{967E5737-8917-4C2B-A0A4-B2B553498462}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>dvize.GodModeTest</RootNamespace>
-    <AssemblyName>dvize.GodModeTest</AssemblyName>
+    <RootNamespace>dvize.DadGamerMode</RootNamespace>
+    <AssemblyName>dvize.DadGamerMode</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
