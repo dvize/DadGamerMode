@@ -21,12 +21,7 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
-
         public ConfigEntry<Boolean> NoFallingDamage
-        {
-            get; set;
-        }
-        public static ConfigEntry<Boolean> CustomDamageMode
         {
             get; set;
         }
@@ -46,101 +41,167 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
-
+        public ConfigEntry<Boolean> CODModeToggle
+        {
+            get; set;
+        }
+        public static ConfigEntry<float> CODModeHealRate
+        {
+            get; set;
+        }
+        public static ConfigEntry<float> CODModeHealWait
+        {
+            get; set;
+        }
         internal void Awake()
         {
-            Godmode = Config.Bind("Player | Health", "Godmode", false, "Invincible");
+            Godmode = Config.Bind("Player | Health", "Godmode", false, "Invincible and No Fall Damage");
             NoFallingDamage = Config.Bind("Player | Health", "No Falling Damage", false, "No Falling Damage");
             MaxStaminaToggle = Config.Bind("Player | Skills", "Infinite Stamina", false, "Stamina Never Drains");
-            InstaSearch = Config.Bind("Player | Skills", "Instant Search", false);
+            InstaSearch = Config.Bind("Player | Skills", "Instant Search", false, "Allows you to instantly search containers.");
             CustomDamageModeVal = Config.Bind("Player | Health", "% Damage Received Value", 100);
             IgnoreHeadShotDamage = Config.Bind("Player | Health", "Ignore Headshot Damage", false);
+            CODModeToggle = Config.Bind("Player | COD", "CODMode", false, "If you don't die, gradually heals you");
+            CODModeHealRate = Config.Bind("Player | COD", "CODMode Heal Rate", 10f, "Sets how fast you heal");
+            CODModeHealWait = Config.Bind("Player | COD", "CODMode Heal Wait", 10f, "Sets how long you wait to heal in seconds");
 
             new ApplyDamagePatch().Enable();
         }
 
         public static Player player;
         public static AbstractGame game;
-        public static float healrate;
-        public static float lastHitTimer = 0f;
-        public static bool readyToHeal = false;
-        public static DamageInfo damageInfo = new DamageInfo
-        {
-            DamageType = EDamageType.Medicine,
-            Damage = healrate,
-            Player = player
-        };
+        private float lastHitTime;
+        private DamageInfo tempDmg;
+        public static float newHealRate;
+        public static bool runOnceAlready;
         void Update()
         {
-            game = Singleton<AbstractGame>.Instance;
-
-            if (game.InRaid && Camera.main.transform.position != null)
+            try
             {
-                player = Singleton<GameWorld>.Instance.MainPlayer;
+                game = Singleton<AbstractGame>.Instance;
 
-                SetGodMode(Godmode.Value);
-                SetNoFallingDamage(NoFallingDamage.Value);
-                SetMaxStamina(MaxStaminaToggle.Value);
-                SetInstaSearch(InstaSearch.Value);
+                if (game.InRaid && Camera.main.transform.position != null)
+                {
+
+                    player = Singleton<GameWorld>.Instance.MainPlayer;
+
+                    //allow the assignment of this only once
+                    if (runOnceAlready == false)
+                    {
+                        //Assign player.BeingHit event to OnPlayerTakeDamage method
+                        player.BeingHitAction += Player_BeingHitAction;
+                        
+                        runOnceAlready = true;
+                    }
+                    
+                    SetGodMode(Godmode.Value);
+                    SetNoFallingDamage(NoFallingDamage.Value);
+                    SetMaxStamina(MaxStaminaToggle.Value);
+                    SetInstaSearch(InstaSearch.Value);
+                    SetCODMode(CODModeToggle.Value);
+
+                }
+                else
+                {
+                    runOnceAlready = false;
+                    lastHitTime = -1;
+                }
             }
+            catch { }
+
+        }
+
+        private void Player_BeingHitAction(DamageInfo arg1, EBodyPart arg2, float arg3)
+        {
+            lastHitTime = Time.time;
+            //Logger.LogDebug("The PlayerTakeDamage Event was Invoked");
+            //Logger.LogDebug("lastHitTime = " + lastHitTime);
+        }
+
+        //create array of all EbodyPart enums to search through in loops later
+        EBodyPart[] parts = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg, 
+            EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
+        void SetCODMode(bool value)
+        {
+            if (value)
+            {
+                foreach (EBodyPart limb in parts)
+                {
+                    player.ActiveHealthController.RemoveNegativeEffects(limb);
+                }
+
+                if (Time.time - lastHitTime >= dadGamer.CODModeHealWait.Value)
+                {
+                    newHealRate = dadGamer.CODModeHealRate.Value * Time.unscaledDeltaTime;
+                    
+                    //Logger.LogDebug($"Current Time.time: {Time.time} , LastHitTime: {lastHitTime}"); 
+                    try
+                    {
+                        foreach (EBodyPart limb in parts)
+                        {
+                            player.ActiveHealthController.ChangeHealth(limb, newHealRate, tempDmg);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError("DadGamerMode COD ChangeHealth: " + e);
+                    }
+                }
+            }
+
         }
 
         void SetGodMode(bool value)
         {
-            try
+
+            if (value)
             {
-                if (value)
-                {
-                    player.PlayerHealthController.SetDamageCoeff(-1f);
-                    player.PlayerHealthController.FallSafeHeight = float.MaxValue;
-                    player.PlayerHealthController.RemoveNegativeEffects(EBodyPart.Common);
-                    player.PlayerHealthController.RestoreFullHealth();
-                }
-                else
-                {
-                    player.PlayerHealthController.SetDamageCoeff(1f);
-                    player.PlayerHealthController.FallSafeHeight = 1.5f;
-                }
+                player.PlayerHealthController.SetDamageCoeff(-1f);
+                player.PlayerHealthController.FallSafeHeight = float.MaxValue;
+                player.PlayerHealthController.RemoveNegativeEffects(EBodyPart.Common);
+                player.PlayerHealthController.RestoreFullHealth();
             }
-            catch { }
+            else
+            {
+                player.PlayerHealthController.SetDamageCoeff(1f);
+                player.PlayerHealthController.FallSafeHeight = 1.5f;
+            }
+
         }
 
         void SetNoFallingDamage(bool value)
         {
-            try
+            if (value)
             {
-                if (value)
-                    player.PlayerHealthController.FallSafeHeight = 999999f;
-                else
-                    player.PlayerHealthController.FallSafeHeight = 1.5f;
+                player.PlayerHealthController.FallSafeHeight = 999999f;
             }
-            catch { }
+            else
+            {
+                player.PlayerHealthController.FallSafeHeight = 1.5f;
+            }
+
         }
 
         void SetMaxStamina(bool value)
         {
-            try
+            if (value)
             {
                 player.Physical.Stamina.Current = player.Physical.Stamina.TotalCapacity.Value;
                 player.Physical.HandsStamina.Current = player.Physical.HandsStamina.TotalCapacity.Value;
                 player.Physical.Oxygen.Current = player.Physical.Oxygen.TotalCapacity.Value;
             }
-            catch
-            {
-            }
         }
 
         void SetInstaSearch(bool value)
         {
-            try
+
+            if (value)
             {
                 player.Skills.AttentionEliteExtraLootExp.Value = true;
                 player.Skills.AttentionEliteLuckySearch.Value = 100f;
                 player.Skills.IntellectEliteContainerScope.Value = true;
             }
-            catch
-            {
-            }
+
         }
 
     }
