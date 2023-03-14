@@ -9,11 +9,12 @@ using EFT.InventoryLogic;
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.3.1")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.4.0")]
 
     public class dadGamer : BaseUnityPlugin
     {
@@ -67,74 +68,87 @@ namespace dvize.GodModeTest
 
             new ApplyDamagePatch().Enable();
         }
-
-        public static Player player;
-        public static AbstractGame game;
-        private float lastHitTime;
+     
+        public AbstractGame game;
         private DamageInfo tempDmg;
-        public static float newHealRate;
-        public static bool runOnceAlready;
+        public float newHealRate;
+        public static bool runOnceAlready = false;
+        public static bool newGame = true;
         void Update()
         {
             try
             {
                 game = Singleton<AbstractGame>.Instance;
-
+                
                 if (game.InRaid && Camera.main.transform.position != null)
                 {
-
-                    player = Singleton<GameWorld>.Instance.MainPlayer;
-
-                    //allow the assignment of this only once
-                    if (runOnceAlready == false)
+                    if (newGame)
                     {
-                        //Assign player.BeingHit event to OnPlayerTakeDamage method
-                        player.BeingHitAction += Player_BeingHitAction;
-                        
-                        runOnceAlready = true;
-                    }
-                    
-                    SetGodMode(Godmode.Value);
-                    SetNoFallingDamage(NoFallingDamage.Value);
-                    SetMaxStamina(MaxStaminaToggle.Value);
-                    SetInstaSearch(InstaSearch.Value);
-                    SetCODMode(CODModeToggle.Value);
+                        var player = Singleton<GameWorld>.Instance.MainPlayer;
 
-                }
-                else
-                {
-                    runOnceAlready = false;
-                    lastHitTime = -1;
+                        if (!runOnceAlready && game.Status == GameStatus.Started)
+                        {
+                            Logger.LogDebug("DadGamerMode: Attaching events");
+                            player.BeingHitAction += Player_BeingHitAction;
+                            player.OnPlayerDeadOrUnspawn += Player_OnPlayerDeadOrUnspawn;
+                            runOnceAlready = true;
+                        }
+
+                        SetGodMode(Godmode.Value, player);
+                        SetNoFallingDamage(NoFallingDamage.Value, player);
+                        SetMaxStamina(MaxStaminaToggle.Value, player);
+                        SetInstaSearch(InstaSearch.Value, player);
+                        SetCODMode(CODModeToggle.Value, player);
+                    }
                 }
             }
             catch { }
-
         }
 
-        private void Player_BeingHitAction(DamageInfo arg1, EBodyPart arg2, float arg3)
+        float timeSinceLastHit = 0f;
+        void Player_BeingHitAction(DamageInfo dmgInfo, EBodyPart bodyPart, float hitEffectId)
         {
-            lastHitTime = Time.time;
-            //Logger.LogDebug("The PlayerTakeDamage Event was Invoked");
-            //Logger.LogDebug("lastHitTime = " + lastHitTime);
+            timeSinceLastHit = 0f;
+        }
+
+        void Player_OnPlayerDeadOrUnspawn(Player player)
+        {
+            Logger.LogDebug("DadGamerMode: Undo all events");
+            player.BeingHitAction -= Player_BeingHitAction;
+            player.OnPlayerDeadOrUnspawn -= Player_OnPlayerDeadOrUnspawn;
+            runOnceAlready = false;
+            newGame = false;
+
+            Task.Delay(TimeSpan.FromSeconds(15)).ContinueWith(_ =>
+            {
+                // Set newGame = true after the timer is finished so it doesn't execute the events right away
+                newGame = true;
+            });
         }
 
         //create array of all EbodyPart enums to search through in loops later
         EBodyPart[] parts = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg, 
             EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
-        void SetCODMode(bool value)
+        void SetCODMode(bool value, Player player)
         {
             if (value)
             {
+                //track timeSinceLastHit since its enabled
+                timeSinceLastHit += Time.unscaledDeltaTime;
+                
+                //NEED TO remove negativeffects and fix broken limbs
                 foreach (EBodyPart limb in parts)
                 {
+                    player.ActiveHealthController.RestoreBodyPart(limb, 0f);
                     player.ActiveHealthController.RemoveNegativeEffects(limb);
                 }
 
-                if (Time.time - lastHitTime >= dadGamer.CODModeHealWait.Value)
+                
+                if (timeSinceLastHit >= dadGamer.CODModeHealWait.Value)
                 {
                     newHealRate = dadGamer.CODModeHealRate.Value * Time.unscaledDeltaTime;
-                    
-                    //Logger.LogDebug($"Current Time.time: {Time.time} , LastHitTime: {lastHitTime}"); 
+
+                    //Logger.LogDebug($"timeSinceLastHit: {timeSinceLastHit}");
                     try
                     {
                         foreach (EBodyPart limb in parts)
@@ -148,28 +162,27 @@ namespace dvize.GodModeTest
                     }
                 }
             }
-
         }
 
-        void SetGodMode(bool value)
+        void SetGodMode(bool value, Player player)
         {
 
             if (value)
             {
                 player.PlayerHealthController.SetDamageCoeff(-1f);
-                player.PlayerHealthController.FallSafeHeight = float.MaxValue;
+                player.PlayerHealthController.FallSafeHeight = 999999;
                 player.PlayerHealthController.RemoveNegativeEffects(EBodyPart.Common);
                 player.PlayerHealthController.RestoreFullHealth();
             }
             else
             {
                 player.PlayerHealthController.SetDamageCoeff(1f);
-                player.PlayerHealthController.FallSafeHeight = 1.5f;
+                player.PlayerHealthController.FallSafeHeight = 1.8f;
             }
 
         }
 
-        void SetNoFallingDamage(bool value)
+        void SetNoFallingDamage(bool value, Player player)
         {
             if (value)
             {
@@ -177,12 +190,12 @@ namespace dvize.GodModeTest
             }
             else
             {
-                player.PlayerHealthController.FallSafeHeight = 1.5f;
+                player.PlayerHealthController.FallSafeHeight = 1.8f;
             }
 
         }
 
-        void SetMaxStamina(bool value)
+        void SetMaxStamina(bool value, Player player)
         {
             if (value)
             {
@@ -192,7 +205,7 @@ namespace dvize.GodModeTest
             }
         }
 
-        void SetInstaSearch(bool value)
+        void SetInstaSearch(bool value, Player player)
         {
 
             if (value)
