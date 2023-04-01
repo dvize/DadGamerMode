@@ -1,20 +1,16 @@
-﻿using Aki.Reflection.Patching;
-using BepInEx;
-using BepInEx.Configuration;
-using BepInEx.Logging;
-using Comfort.Common;
-using EFT;
-using EFT.HealthSystem;
-using EFT.InventoryLogic;
-using System;
-using System.Linq.Expressions;
+﻿using System;
 using System.Reflection;
 using System.Threading.Tasks;
+using Aki.Reflection.Patching;
+using BepInEx;
+using BepInEx.Configuration;
+using Comfort.Common;
+using EFT;
 using UnityEngine;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.4.0")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.4.1")]
 
     public class dadGamer : BaseUnityPlugin
     {
@@ -54,6 +50,11 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
+        public ConfigEntry<Boolean> CODBleedingDamageToggle
+        {
+            get; set;
+        }
+
         internal void Awake()
         {
             Godmode = Config.Bind("Player | Health", "Godmode", false, "Invincible and No Fall Damage");
@@ -65,10 +66,10 @@ namespace dvize.GodModeTest
             CODModeToggle = Config.Bind("Player | COD", "CODMode", false, "If you don't die, gradually heals you");
             CODModeHealRate = Config.Bind("Player | COD", "CODMode Heal Rate", 10f, "Sets how fast you heal");
             CODModeHealWait = Config.Bind("Player | COD", "CODMode Heal Wait", 10f, "Sets how long you wait to heal in seconds");
-
+            CODBleedingDamageToggle = Config.Bind("Player | COD", "CODMode Bleeding Damage", false, "You still get bleeding and fractures if enabled");
             new ApplyDamagePatch().Enable();
         }
-     
+
         public AbstractGame game;
         private DamageInfo tempDmg;
         public float newHealRate;
@@ -79,7 +80,7 @@ namespace dvize.GodModeTest
             try
             {
                 game = Singleton<AbstractGame>.Instance;
-                
+
                 if (game.InRaid && Camera.main.transform.position != null)
                 {
                     if (newGame)
@@ -106,10 +107,7 @@ namespace dvize.GodModeTest
         }
 
         float timeSinceLastHit = 0f;
-        void Player_BeingHitAction(DamageInfo dmgInfo, EBodyPart bodyPart, float hitEffectId)
-        {
-            timeSinceLastHit = 0f;
-        }
+        void Player_BeingHitAction(DamageInfo dmgInfo, EBodyPart bodyPart, float hitEffectId) => timeSinceLastHit = 0f;
 
         void Player_OnPlayerDeadOrUnspawn(Player player)
         {
@@ -127,7 +125,7 @@ namespace dvize.GodModeTest
         }
 
         //create array of all EbodyPart enums to search through in loops later
-        EBodyPart[] parts = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg, 
+        readonly EBodyPart[] parts = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg,
             EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
         void SetCODMode(bool value, Player player)
         {
@@ -135,15 +133,19 @@ namespace dvize.GodModeTest
             {
                 //track timeSinceLastHit since its enabled
                 timeSinceLastHit += Time.unscaledDeltaTime;
-                
+
                 //NEED TO remove negativeffects and fix broken limbs
+                
                 foreach (EBodyPart limb in parts)
                 {
                     player.ActiveHealthController.RestoreBodyPart(limb, 0f);
-                    player.ActiveHealthController.RemoveNegativeEffects(limb);
+
+                    if (!CODBleedingDamageToggle.Value)
+                    {
+                        player.ActiveHealthController.RemoveNegativeEffects(limb);
+                    }
                 }
 
-                
                 if (timeSinceLastHit >= dadGamer.CODModeHealWait.Value)
                 {
                     newHealRate = dadGamer.CODModeHealRate.Value * Time.unscaledDeltaTime;
@@ -156,9 +158,9 @@ namespace dvize.GodModeTest
                             player.ActiveHealthController.ChangeHealth(limb, newHealRate, tempDmg);
                         }
                     }
-                    catch (Exception e)
+                    catch
                     {
-                        Logger.LogError("DadGamerMode COD ChangeHealth: " + e);
+                        //Logger.LogError("DadGamerMode COD ChangeHealth: " + e);
                     }
                 }
             }
@@ -218,43 +220,43 @@ namespace dvize.GodModeTest
         }
 
     }
-        public class ApplyDamagePatch : ModulePatch
+    public class ApplyDamagePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
         {
-            protected override MethodBase GetTargetMethod()
+            try
             {
-                try
-                {
-                    return typeof(ActiveHealthControllerClass).GetMethod("ApplyDamage", BindingFlags.Instance | BindingFlags.Public);
-                }
-                catch(Exception e)
-                {
-                    Logger.LogDebug("Error ApplyDamagePatch: " + e);
-                    return null;
-                }
-
+                return typeof(ActiveHealthControllerClass).GetMethod("ApplyDamage", BindingFlags.Instance | BindingFlags.Public);
             }
-
-            [PatchPrefix]
-            public static bool Prefix(ActiveHealthControllerClass __instance, ref float damage, EBodyPart bodyPart, DamageInfo damageInfo)
+            catch (Exception e)
             {
-                if (__instance.Player.IsYourPlayer)   
-                {
-                    if (bodyPart == EBodyPart.Head && dadGamer.IgnoreHeadShotDamage.Value == true)
-                    {
-                        damage = 0f;
-                        return false;
-                    }
-
-                    float damagePercent = (float)dadGamer.CustomDamageModeVal.Value / 100;
-                    damage = damage * damagePercent;
-                
-                }
-                return true;
+                Logger.LogDebug("Error ApplyDamagePatch: " + e);
+                return null;
             }
 
         }
 
-    
+        [PatchPrefix]
+        public static bool Prefix(ActiveHealthControllerClass __instance, ref float damage, EBodyPart bodyPart, DamageInfo damageInfo)
+        {
+            if (__instance.Player.IsYourPlayer)
+            {
+                if (bodyPart == EBodyPart.Head && dadGamer.IgnoreHeadShotDamage.Value == true)
+                {
+                    damage = 0f;
+                    return false;
+                }
+
+                float damagePercent = (float)dadGamer.CustomDamageModeVal.Value / 100;
+                damage = damage * damagePercent;
+
+            }
+            return true;
+        }
+
+    }
+
+
 
 }
 
