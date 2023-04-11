@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Aki.Reflection.Patching;
@@ -9,9 +6,6 @@ using BepInEx;
 using BepInEx.Configuration;
 using Comfort.Common;
 using EFT;
-using HarmonyLib;
-using EFT.HealthSystem;
-using EFT.InventoryLogic;
 using UnityEngine;
 
 namespace dvize.GodModeTest
