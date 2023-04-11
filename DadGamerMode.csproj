@@ -31,6 +31,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\SPT-AKI\BepInEx\core\0Harmony.dll</HintPath>
+    </Reference>
     <Reference Include="Aki.Build">
       <HintPath>F:\SPT-AKI\EscapeFromTarkov_Data\Managed\Aki.Build.dll</HintPath>
     </Reference>

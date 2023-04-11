@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Aki.Reflection.Patching;
@@ -6,11 +9,14 @@ using BepInEx;
 using BepInEx.Configuration;
 using Comfort.Common;
 using EFT;
+using HarmonyLib;
+using EFT.HealthSystem;
+using EFT.InventoryLogic;
 using UnityEngine;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.4.1")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.5.0")]
 
     public class dadGamer : BaseUnityPlugin
     {
@@ -38,7 +44,7 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
-        public ConfigEntry<Boolean> CODModeToggle
+        public static ConfigEntry<Boolean> CODModeToggle
         {
             get; set;
         }
@@ -63,11 +69,12 @@ namespace dvize.GodModeTest
             InstaSearch = Config.Bind("Player | Skills", "Instant Search", false, "Allows you to instantly search containers.");
             CustomDamageModeVal = Config.Bind("Player | Health", "% Damage Received Value", 100);
             IgnoreHeadShotDamage = Config.Bind("Player | Health", "Ignore Headshot Damage", false);
-            CODModeToggle = Config.Bind("Player | COD", "CODMode", false, "If you don't die, gradually heals you");
+            CODModeToggle = Config.Bind("Player | COD", "CODMode", false, "If you don't die, gradually heals you and no blacked out limbs");
             CODModeHealRate = Config.Bind("Player | COD", "CODMode Heal Rate", 10f, "Sets how fast you heal");
             CODModeHealWait = Config.Bind("Player | COD", "CODMode Heal Wait", 10f, "Sets how long you wait to heal in seconds");
             CODBleedingDamageToggle = Config.Bind("Player | COD", "CODMode Bleeding Damage", false, "You still get bleeding and fractures if enabled");
             new ApplyDamagePatch().Enable();
+            new DestroyBodyPartPatch().Enable();
         }
 
         public AbstractGame game;
@@ -92,6 +99,7 @@ namespace dvize.GodModeTest
                             Logger.LogDebug("DadGamerMode: Attaching events");
                             player.BeingHitAction += Player_BeingHitAction;
                             player.OnPlayerDeadOrUnspawn += Player_OnPlayerDeadOrUnspawn;
+                            player.ActiveHealthController.BodyPartDestroyedEvent += ActiveHealthController_BodyPartDestroyedEvent;
                             runOnceAlready = true;
                         }
 
@@ -106,6 +114,14 @@ namespace dvize.GodModeTest
             catch { }
         }
 
+        private void ActiveHealthController_BodyPartDestroyedEvent(EBodyPart arg1, EDamageType arg2)
+        {
+            var player = Singleton<GameWorld>.Instance.MainPlayer;
+            Logger.LogDebug("player Active Health Controller BodyPartDestroyed Event: " + arg1 + " " + arg2);
+
+            player.ActiveHealthController.RestoreBodyPart(arg1, 0f);
+        }
+
         float timeSinceLastHit = 0f;
         void Player_BeingHitAction(DamageInfo dmgInfo, EBodyPart bodyPart, float hitEffectId) => timeSinceLastHit = 0f;
 
@@ -114,6 +130,7 @@ namespace dvize.GodModeTest
             Logger.LogDebug("DadGamerMode: Undo all events");
             player.BeingHitAction -= Player_BeingHitAction;
             player.OnPlayerDeadOrUnspawn -= Player_OnPlayerDeadOrUnspawn;
+            player.ActiveHealthController.BodyPartDestroyedEvent -= ActiveHealthController_BodyPartDestroyedEvent;
             runOnceAlready = false;
             newGame = false;
 
@@ -134,18 +151,18 @@ namespace dvize.GodModeTest
                 //track timeSinceLastHit since its enabled
                 timeSinceLastHit += Time.unscaledDeltaTime;
 
-                //NEED TO remove negativeffects and fix broken limbs
-                
                 foreach (EBodyPart limb in parts)
                 {
-                    player.ActiveHealthController.RestoreBodyPart(limb, 0f);
+                    //player.ActiveHealthController.RestoreBodyPart(limb, 0f);
 
+                    // Remove negative effects only if bleeding damage toggled.
                     if (!CODBleedingDamageToggle.Value)
                     {
                         player.ActiveHealthController.RemoveNegativeEffects(limb);
                     }
                 }
 
+                //heal player if time passed the CODModeHealWait value
                 if (timeSinceLastHit >= dadGamer.CODModeHealWait.Value)
                 {
                     newHealRate = dadGamer.CODModeHealRate.Value * Time.unscaledDeltaTime;
@@ -220,6 +237,7 @@ namespace dvize.GodModeTest
         }
 
     }
+
     public class ApplyDamagePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -256,7 +274,34 @@ namespace dvize.GodModeTest
 
     }
 
+    public class DestroyBodyPartPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            try
+            {
+                return typeof(ActiveHealthControllerClass).GetMethod("DestroyBodyPart", BindingFlags.Instance | BindingFlags.Public);
+            }
+            catch (Exception e)
+            {
+                Logger.LogDebug("Error DestroyBodyPartPatch: " + e);
+                return null;
+            }
 
+        }
+
+        [PatchPrefix]
+        static bool Prefix(ActiveHealthControllerClass __instance, EBodyPart bodyPart, EDamageType damageType)
+        {
+            if (dadGamer.CODModeToggle.Value)
+            {
+                return false; //skip orig method
+            }
+
+            return true;
+        }
+
+    }
 
 }
 
