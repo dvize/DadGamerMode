@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
 using Aki.Reflection.Patching;
@@ -7,6 +8,7 @@ using BepInEx.Configuration;
 using Comfort.Common;
 using EFT;
 using UnityEngine;
+using VersionChecker;
 
 namespace dvize.GodModeTest
 {
@@ -67,8 +69,12 @@ namespace dvize.GodModeTest
             CODModeHealRate = Config.Bind("Player | COD", "CODMode Heal Rate", 10f, "Sets how fast you heal");
             CODModeHealWait = Config.Bind("Player | COD", "CODMode Heal Wait", 10f, "Sets how long you wait to heal in seconds");
             CODBleedingDamageToggle = Config.Bind("Player | COD", "CODMode Bleeding Damage", false, "You still get bleeding and fractures if enabled");
+
+            CheckEftVersion();
+            
             new ApplyDamagePatch().Enable();
             new DestroyBodyPartPatch().Enable();
+
         }
 
         public AbstractGame game;
@@ -228,6 +234,18 @@ namespace dvize.GodModeTest
                 player.Skills.IntellectEliteContainerScope.Value = true;
             }
 
+        }
+        private void CheckEftVersion()
+        {
+            // Make sure the version of EFT being run is the correct version
+            int currentVersion = FileVersionInfo.GetVersionInfo(BepInEx.Paths.ExecutablePath).FilePrivatePart;
+            int buildVersion = TarkovVersion.BuildVersion;
+            if (currentVersion != buildVersion)
+            {
+                Logger.LogError($"ERROR: This version of {Info.Metadata.Name} v{Info.Metadata.Version} was built for Tarkov {buildVersion}, but you are running {currentVersion}. Please download the correct plugin version.");
+                EFT.UI.ConsoleScreen.LogError($"ERROR: This version of {Info.Metadata.Name} v{Info.Metadata.Version} was built for Tarkov {buildVersion}, but you are running {currentVersion}. Please download the correct plugin version.");
+                throw new Exception($"Invalid EFT Version ({currentVersion} != {buildVersion})");
+            }
         }
 
     }
