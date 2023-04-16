@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.5.0")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.5.1")]
 
     public class dadGamer : BaseUnityPlugin
     {
@@ -287,7 +287,7 @@ namespace dvize.GodModeTest
         [PatchPrefix]
         static bool Prefix(ActiveHealthControllerClass __instance, EBodyPart bodyPart, EDamageType damageType)
         {
-            if (dadGamer.CODModeToggle.Value)
+            if (__instance.Player.IsYourPlayer && dadGamer.CODModeToggle.Value)
             {
                 return false; //skip orig method
             }
