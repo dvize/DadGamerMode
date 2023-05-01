@@ -44,21 +44,22 @@ namespace dvize.DadGamerMode.Features
 
         void runCODMode()
         {
-            player = Singleton<GameWorld>.Instance.MainPlayer;
             playerStats = Singleton<PlayerHealth>.Instance;
 
             //remove negative effects every frame unless bleeding damage toggled
             foreach (EBodyPart limb in bodyPartsDict)
             {
                 // Remove negative effects only if bleeding damage is enabled.
-                if (dadGamerPlugin.CODBleedingDamageToggle.Value)
+                if (dadGamerPlugin.CODBleedingDamageToggle.Value && 
+                    playerStats != null)
                 {
                     playerStats.Health[limb].RemoveAllEffects();
                 }
             }
 
             //heal player if time passed the CODModeHealWait value
-            if (timeSinceLastHit >= dadGamerPlugin.CODModeHealWait.Value)
+            if (timeSinceLastHit >= dadGamerPlugin.CODModeHealWait.Value &&
+                playerStats != null)
             {
                 newHealRate = dadGamerPlugin.CODModeHealRate.Value * Time.unscaledDeltaTime;
 

@@ -11,8 +11,7 @@ namespace dvize.DadGamerMode.Patches
     internal class DestroyBodyPartPatch : ModulePatch
     {
         private static readonly EBodyPart[] critBodyParts = { EBodyPart.Stomach, EBodyPart.Head, EBodyPart.Chest };
-        private static FieldInfo currentHealthField;
-        private static BodyPartHealth health;
+        private static DamageInfo tmpDmg;
         private static PlayerHealth playerStats;
         protected override MethodBase GetTargetMethod()
         {
@@ -28,7 +27,8 @@ namespace dvize.DadGamerMode.Patches
                 playerStats = Singleton<PlayerHealth>.Instance;
 
                 //if CODMode is enabled and bleeding damage is disabled
-                if (dadGamerPlugin.CODModeToggle.Value && !dadGamerPlugin.CODBleedingDamageToggle.Value)
+                if (dadGamerPlugin.CODModeToggle.Value && 
+                    !dadGamerPlugin.CODBleedingDamageToggle.Value)
                 {
                     //we don't want to destroy body parts if we are bleeding
                     return false;
@@ -38,12 +38,9 @@ namespace dvize.DadGamerMode.Patches
                 if (dadGamerPlugin.Keep1Health.Value)
                 {
                     //any part should have 1 health.. lets just set the current health to 1
-                    currentHealthField = AccessTools.Field(typeof(BodyPartHealth), "Current");
-                    health = playerStats.Health[bodyPart];
+                    var change = 1 - playerStats.Health[bodyPart].Current;
+                    playerStats.Health[bodyPart].ChangeHealth(1f);
 
-                    currentHealthField.SetValue(health, 1f);
-                    //not sure if this handles destroyed.
-                    playerStats.Health[bodyPart].RemoveEffect(EBodyPartEffect.Unknown);
                     return false;
                 }
             }

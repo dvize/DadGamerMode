@@ -4,15 +4,14 @@ using Aki.SinglePlayer.Models.Healing;
 using Comfort.Common;
 using dvize.GodModeTest;
 using HarmonyLib;
+using UnityEngine;
 
 namespace dvize.DadGamerMode.Patches
 {
     internal class ApplyDamage : ModulePatch
     {
         private static PlayerHealth playerStats;
-        private static readonly EBodyPart[] critBodyParts = { EBodyPart.Stomach, EBodyPart.Head, EBodyPart.Chest };
-        private static FieldInfo currentHealthField;
-        private static BodyPartHealth health;
+        private static MethodInfo currentHealthProp;
         protected override MethodBase GetTargetMethod()
         {
             return AccessTools.Method(typeof(ActiveHealthControllerClass), "ApplyDamage");
@@ -35,6 +34,7 @@ namespace dvize.DadGamerMode.Patches
                 //if there's a custom damage value use that
                 if (dadGamerPlugin.CustomDamageModeVal.Value != 100)
                 {
+                    //set damage early so we can use it in the keep1health check
                     damage = damage * ((float)dadGamerPlugin.CustomDamageModeVal.Value / 100);
                 }
 
@@ -45,15 +45,13 @@ namespace dvize.DadGamerMode.Patches
                     return false;
                 }
 
-                //if keep 1 health enabled, set damage to 0 and set health to 1
-                if ((dadGamerPlugin.Keep1Health.Value && 
+                //if keep 1 health enabled, set damage to 0 
+                if ((dadGamerPlugin.Keep1Health.Value &&
                     (playerStats.Health[bodyPart].Current - damage) < 1))
                 {
+                    //just never apply damage if keep1health is enabled and we are going to be below 1 health
                     damage = 0f;
-                    currentHealthField = AccessTools.Field(typeof(BodyPartHealth), "Current");
-                    health = playerStats.Health[bodyPart];
 
-                    currentHealthField.SetValue(health, 1f);
                     return false;
                 }
             }
