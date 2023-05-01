@@ -1,26 +1,37 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Aki.Reflection.Patching;
+using Aki.SinglePlayer.Models.Healing;
+using Aki.SinglePlayer.Utils.Healing;
 using BepInEx;
 using BepInEx.Configuration;
 using Comfort.Common;
 using EFT;
+using EFT.HealthSystem;
+using HarmonyLib;
 using UnityEngine;
 using VersionChecker;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.5.1")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.6.0")]
 
-    public class dadGamer : BaseUnityPlugin
+    public class dadGamerPlugin : BaseUnityPlugin
     {
-        public ConfigEntry<Boolean> Godmode
+        public static ConfigEntry<Boolean> Godmode
         {
             get; set;
         }
-        public ConfigEntry<Boolean> NoFallingDamage
+        public static ConfigEntry<Boolean> Keep1Health
+        {
+            get; set;
+        }
+        public static ConfigEntry<Boolean> NoFallingDamage
         {
             get; set;
         }
@@ -32,11 +43,7 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
-        public ConfigEntry<Boolean> InstaSearch
-        {
-            get; private set;
-        }
-        public ConfigEntry<Boolean> MaxStaminaToggle
+        public static ConfigEntry<Boolean> MaxStaminaToggle
         {
             get; set;
         }
@@ -52,189 +59,33 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
-        public ConfigEntry<Boolean> CODBleedingDamageToggle
+        public static ConfigEntry<Boolean> CODBleedingDamageToggle
         {
             get; set;
         }
 
         internal void Awake()
         {
-            Godmode = Config.Bind("Player | Health", "Godmode", false, "Invincible and No Fall Damage");
-            NoFallingDamage = Config.Bind("Player | Health", "No Falling Damage", false, "No Falling Damage");
-            MaxStaminaToggle = Config.Bind("Player | Skills", "Infinite Stamina", false, "Stamina Never Drains");
-            InstaSearch = Config.Bind("Player | Skills", "Instant Search", false, "Allows you to instantly search containers.");
-            CustomDamageModeVal = Config.Bind("Player | Health", "% Damage Received Value", 100);
-            IgnoreHeadShotDamage = Config.Bind("Player | Health", "Ignore Headshot Damage", false);
-            CODModeToggle = Config.Bind("Player | COD", "CODMode", false, "If you don't die, gradually heals you and no blacked out limbs");
-            CODModeHealRate = Config.Bind("Player | COD", "CODMode Heal Rate", 10f, "Sets how fast you heal");
-            CODModeHealWait = Config.Bind("Player | COD", "CODMode Heal Wait", 10f, "Sets how long you wait to heal in seconds");
-            CODBleedingDamageToggle = Config.Bind("Player | COD", "CODMode Bleeding Damage", false, "You still get bleeding and fractures if enabled");
-
             CheckEftVersion();
-            
-            new ApplyDamagePatch().Enable();
-            new DestroyBodyPartPatch().Enable();
 
+            Godmode = Config.Bind("Health", "Godmode", false, "Invincible but Fall Damage Separate");
+            NoFallingDamage = Config.Bind("Health", "No Falling Damage", false, "No Falling Damage");
+            MaxStaminaToggle = Config.Bind("Health", "Infinite Stamina", false, "Stamina Never Drains");
+            Keep1Health = Config.Bind("Health", "Keep 1 Health", false, "Keeps your bodyparts from falling below 1 Health");
+
+            CustomDamageModeVal = Config.Bind("Health", "% Damage Received Value", 100, "Set a Damage Threshold limit %");
+            IgnoreHeadShotDamage = Config.Bind("Health", "Ignore Headshot Damage", false, "Ignore headshot");
+            CODModeToggle = Config.Bind("COD", "CODMode", false, "If you don't die, gradually heals you and no blacked out limbs");
+            CODModeHealRate = Config.Bind("COD", "CODMode Heal Rate", 10f, "Sets how fast you heal");
+            CODModeHealWait = Config.Bind("COD", "CODMode Heal Wait", 10f, "Sets how long you wait to heal in seconds");
+            CODBleedingDamageToggle = Config.Bind("COD", "CODMode Bleeding Damage", false, "You still get bleeding and fractures if enabled");
+           
+
+            new NewGamePatch().Enable();
+            new DadGamerMode.Patches.ApplyDamage().Enable();
+            new DadGamerMode.Patches.DestroyBodyPartPatch().Enable();
         }
 
-        public AbstractGame game;
-        private DamageInfo tempDmg;
-        public float newHealRate;
-        public static bool runOnceAlready = false;
-        public static bool newGame = true;
-        void Update()
-        {
-            try
-            {
-                game = Singleton<AbstractGame>.Instance;
-
-                if (game.InRaid && Camera.main.transform.position != null)
-                {
-                    if (newGame)
-                    {
-                        var player = Singleton<GameWorld>.Instance.MainPlayer;
-
-                        if (!runOnceAlready && game.Status == GameStatus.Started)
-                        {
-                            Logger.LogDebug("DadGamerMode: Attaching events");
-                            player.BeingHitAction += Player_BeingHitAction;
-                            player.OnPlayerDeadOrUnspawn += Player_OnPlayerDeadOrUnspawn;
-                            player.ActiveHealthController.BodyPartDestroyedEvent += ActiveHealthController_BodyPartDestroyedEvent;
-                            runOnceAlready = true;
-                        }
-
-                        SetGodMode(Godmode.Value, player);
-                        SetNoFallingDamage(NoFallingDamage.Value, player);
-                        SetMaxStamina(MaxStaminaToggle.Value, player);
-                        SetInstaSearch(InstaSearch.Value, player);
-                        SetCODMode(CODModeToggle.Value, player);
-                    }
-                }
-            }
-            catch { }
-        }
-
-        private void ActiveHealthController_BodyPartDestroyedEvent(EBodyPart arg1, EDamageType arg2)
-        {
-            var player = Singleton<GameWorld>.Instance.MainPlayer;
-            Logger.LogDebug("player Active Health Controller BodyPartDestroyed Event: " + arg1 + " " + arg2);
-
-            player.ActiveHealthController.RestoreBodyPart(arg1, 0f);
-        }
-
-        float timeSinceLastHit = 0f;
-        void Player_BeingHitAction(DamageInfo dmgInfo, EBodyPart bodyPart, float hitEffectId) => timeSinceLastHit = 0f;
-
-        void Player_OnPlayerDeadOrUnspawn(Player player)
-        {
-            Logger.LogDebug("DadGamerMode: Undo all events");
-            player.BeingHitAction -= Player_BeingHitAction;
-            player.OnPlayerDeadOrUnspawn -= Player_OnPlayerDeadOrUnspawn;
-            player.ActiveHealthController.BodyPartDestroyedEvent -= ActiveHealthController_BodyPartDestroyedEvent;
-            runOnceAlready = false;
-            newGame = false;
-
-            Task.Delay(TimeSpan.FromSeconds(15)).ContinueWith(_ =>
-            {
-                // Set newGame = true after the timer is finished so it doesn't execute the events right away
-                newGame = true;
-            });
-        }
-
-        //create array of all EbodyPart enums to search through in loops later
-        readonly EBodyPart[] parts = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg,
-            EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
-        void SetCODMode(bool value, Player player)
-        {
-            if (value)
-            {
-                //track timeSinceLastHit since its enabled
-                timeSinceLastHit += Time.unscaledDeltaTime;
-
-                foreach (EBodyPart limb in parts)
-                {
-                    //player.ActiveHealthController.RestoreBodyPart(limb, 0f);
-
-                    // Remove negative effects only if bleeding damage toggled.
-                    if (!CODBleedingDamageToggle.Value)
-                    {
-                        player.ActiveHealthController.RemoveNegativeEffects(limb);
-                    }
-                }
-
-                //heal player if time passed the CODModeHealWait value
-                if (timeSinceLastHit >= dadGamer.CODModeHealWait.Value)
-                {
-                    newHealRate = dadGamer.CODModeHealRate.Value * Time.unscaledDeltaTime;
-
-                    //Logger.LogDebug($"timeSinceLastHit: {timeSinceLastHit}");
-                    try
-                    {
-                        foreach (EBodyPart limb in parts)
-                        {
-                            player.ActiveHealthController.ChangeHealth(limb, newHealRate, tempDmg);
-                        }
-                    }
-                    catch
-                    {
-                        //Logger.LogError("DadGamerMode COD ChangeHealth: " + e);
-                    }
-                }
-            }
-        }
-
-        void SetGodMode(bool value, Player player)
-        {
-
-            if (value)
-            {
-                player.PlayerHealthController.SetDamageCoeff(-1f);
-                player.PlayerHealthController.FallSafeHeight = 999999;
-                player.PlayerHealthController.RemoveNegativeEffects(EBodyPart.Common);
-                player.PlayerHealthController.RestoreFullHealth();
-            }
-            else
-            {
-                player.PlayerHealthController.SetDamageCoeff(1f);
-                player.PlayerHealthController.FallSafeHeight = 1.8f;
-            }
-
-        }
-
-        void SetNoFallingDamage(bool value, Player player)
-        {
-            if (value)
-            {
-                player.PlayerHealthController.FallSafeHeight = 999999f;
-            }
-            else
-            {
-                player.PlayerHealthController.FallSafeHeight = 1.8f;
-            }
-
-        }
-
-        void SetMaxStamina(bool value, Player player)
-        {
-            if (value)
-            {
-                player.Physical.Stamina.Current = player.Physical.Stamina.TotalCapacity.Value;
-                player.Physical.HandsStamina.Current = player.Physical.HandsStamina.TotalCapacity.Value;
-                player.Physical.Oxygen.Current = player.Physical.Oxygen.TotalCapacity.Value;
-            }
-        }
-
-        void SetInstaSearch(bool value, Player player)
-        {
-
-            if (value)
-            {
-                player.Skills.AttentionEliteExtraLootExp.Value = true;
-                player.Skills.AttentionEliteLuckySearch.Value = 100f;
-                player.Skills.IntellectEliteContainerScope.Value = true;
-            }
-
-        }
         private void CheckEftVersion()
         {
             // Make sure the version of EFT being run is the correct version
@@ -247,73 +98,37 @@ namespace dvize.GodModeTest
                 throw new Exception($"Invalid EFT Version ({currentVersion} != {buildVersion})");
             }
         }
-
-    }
-
-    public class ApplyDamagePatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
+        internal class NewGamePatch : ModulePatch
         {
-            try
-            {
-                return typeof(ActiveHealthControllerClass).GetMethod("ApplyDamage", BindingFlags.Instance | BindingFlags.Public);
-            }
-            catch (Exception e)
-            {
-                Logger.LogDebug("Error ApplyDamagePatch: " + e);
-                return null;
-            }
+            protected override MethodBase GetTargetMethod() => typeof(GameWorld).GetMethod(nameof(GameWorld.OnGameStarted));
 
-        }
-
-        [PatchPrefix]
-        public static bool Prefix(ActiveHealthControllerClass __instance, ref float damage, EBodyPart bodyPart, DamageInfo damageInfo)
-        {
-            if (__instance.Player.IsYourPlayer)
+            [PatchPrefix]
+            public static void PatchPrefix()
             {
-                if (bodyPart == EBodyPart.Head && dadGamer.IgnoreHeadShotDamage.Value == true)
+                if (Godmode.Value)
                 {
-                    damage = 0f;
-                    return false;
+                    DadGamerMode.Features.CODModeComponent.Enable();
+                }
+                
+                if (CODModeToggle.Value)
+                {
+                    DadGamerMode.Features.CODModeComponent.Enable();
                 }
 
-                float damagePercent = (float)dadGamer.CustomDamageModeVal.Value / 100;
-                damage = damage * damagePercent;
+                if (MaxStaminaToggle.Value)
+                {
+                    DadGamerMode.Features.MaxStaminaComponent.Enable();
+                }
 
+                if(NoFallingDamage.Value)
+                {
+                    DadGamerMode.Features.NoFallingDamageComponent.Enable();
+                }
             }
-            return true;
         }
-
     }
 
-    public class DestroyBodyPartPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
-        {
-            try
-            {
-                return typeof(ActiveHealthControllerClass).GetMethod("DestroyBodyPart", BindingFlags.Instance | BindingFlags.Public);
-            }
-            catch (Exception e)
-            {
-                Logger.LogDebug("Error DestroyBodyPartPatch: " + e);
-                return null;
-            }
-
-        }
-
-        [PatchPrefix]
-        static bool Prefix(ActiveHealthControllerClass __instance, EBodyPart bodyPart, EDamageType damageType)
-        {
-            if (__instance.Player.IsYourPlayer && dadGamer.CODModeToggle.Value)
-            {
-                return false; //skip orig method
-            }
-
-            return true;
-        }
-
-    }
+    
 
 }
 
