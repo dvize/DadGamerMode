@@ -1,20 +1,10 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Aki.Reflection.Patching;
-using Aki.SinglePlayer.Models.Healing;
-using Aki.SinglePlayer.Utils.Healing;
 using BepInEx;
 using BepInEx.Configuration;
-using Comfort.Common;
 using EFT;
-using EFT.HealthSystem;
-using HarmonyLib;
-using UnityEngine;
 using VersionChecker;
 
 namespace dvize.GodModeTest
@@ -79,7 +69,7 @@ namespace dvize.GodModeTest
             CODModeHealRate = Config.Bind("COD", "CODMode Heal Rate", 10f, "Sets how fast you heal");
             CODModeHealWait = Config.Bind("COD", "CODMode Heal Wait", 10f, "Sets how long you wait to heal in seconds");
             CODBleedingDamageToggle = Config.Bind("COD", "CODMode Bleeding Damage", false, "You still get bleeding and fractures if enabled");
-           
+
 
             new NewGamePatch().Enable();
             new DadGamerMode.Patches.ApplyDamage().Enable();
@@ -105,30 +95,14 @@ namespace dvize.GodModeTest
             [PatchPrefix]
             public static void PatchPrefix()
             {
-                if (Godmode.Value)
-                {
-                    DadGamerMode.Features.CODModeComponent.Enable();
-                }
-                
-                if (CODModeToggle.Value)
-                {
-                    DadGamerMode.Features.CODModeComponent.Enable();
-                }
-
-                if (MaxStaminaToggle.Value)
-                {
-                    DadGamerMode.Features.MaxStaminaComponent.Enable();
-                }
-
-                if(NoFallingDamage.Value)
-                {
-                    DadGamerMode.Features.NoFallingDamageComponent.Enable();
-                }
+                DadGamerMode.Features.CODModeComponent.Enable();
+                DadGamerMode.Features.MaxStaminaComponent.Enable();
+                DadGamerMode.Features.NoFallingDamageComponent.Enable();
             }
         }
     }
 
-    
+
 
 }
 

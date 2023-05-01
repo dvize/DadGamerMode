@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Aki.SinglePlayer.Models.Healing;
+﻿using Aki.SinglePlayer.Models.Healing;
 using BepInEx.Logging;
 using Comfort.Common;
 using dvize.GodModeTest;
@@ -36,15 +31,15 @@ namespace dvize.DadGamerMode.Features
 
         private void Update()
         {
-            //track timeSinceLastHit since its enabled
-            timeSinceLastHit += Time.unscaledDeltaTime;
-
             //since its enabled
             if (dadGamerPlugin.CODModeToggle.Value)
             {
+                //track timeSinceLastHit since its enabled
+                timeSinceLastHit += Time.unscaledDeltaTime;
+
                 runCODMode();
             }
-        
+
         }
 
         void runCODMode()
@@ -76,9 +71,10 @@ namespace dvize.DadGamerMode.Features
                     }
                 }
                 catch
-                {}
+                {
+                }
             }
-            
+
         }
 
         public static void Enable()

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Reflection;
 using Aki.Reflection.Patching;
 using Aki.SinglePlayer.Models.Healing;
 using Comfort.Common;
@@ -28,7 +23,7 @@ namespace dvize.DadGamerMode.Patches
         static bool Prefix(ActiveHealthControllerClass __instance, EBodyPart bodyPart, EDamageType damageType)
         {
             //only care about your player
-            if (__instance.Player.IsYourPlayer)
+            if (__instance.Player != null && __instance.Player.IsYourPlayer)
             {
                 playerStats = Singleton<PlayerHealth>.Instance;
 
@@ -36,7 +31,7 @@ namespace dvize.DadGamerMode.Patches
                 if (dadGamerPlugin.CODModeToggle.Value && !dadGamerPlugin.CODBleedingDamageToggle.Value)
                 {
                     //we don't want to destroy body parts if we are bleeding
-                    return false; 
+                    return false;
                 }
 
                 //if keep1Health is enabled

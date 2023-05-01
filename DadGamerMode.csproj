@@ -94,7 +94,6 @@
     <Compile Include="Features\CODMode.cs" />
     <Compile Include="Features\MaxStamina.cs" />
     <Compile Include="Features\FallingDamage.cs" />
-    <Compile Include="Features\GodMode.cs" />
     <Compile Include="Patches\ApplyDamage.cs" />
     <Compile Include="Patches\DestroyBodyPart.cs" />
     <Compile Include="Plugin.cs" />
