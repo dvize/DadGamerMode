@@ -1,5 +1,6 @@
 ﻿using BepInEx.Logging;
 using Comfort.Common;
+using dvize.GodModeTest;
 using EFT;
 using UnityEngine;
 
@@ -7,6 +8,7 @@ namespace dvize.DadGamerMode.Features
 {
     internal class NoFallingDamageComponent : MonoBehaviour
     {
+        private Player player;
         protected static ManualLogSource Logger
         {
             get; private set;
@@ -19,23 +21,38 @@ namespace dvize.DadGamerMode.Features
                 Logger = BepInEx.Logging.Logger.CreateLogSource(nameof(NoFallingDamageComponent));
             }
         }
-        public static void Enable()
+
+        private void Start()
         {
-            try
+            player = Singleton<GameWorld>.Instance.MainPlayer;
+            Logger.LogDebug("DadGamerMode: Setting No Falling Damage");
+        }
+        private void Update()
+        {
+            player.ActiveHealthController.FallSafeHeight = dadGamerPlugin.NoFallingDamage.Value ? 999999f : 1.8f;
+        }
+
+        internal static void Enable()
+        {
+            if (Singleton<IBotGame>.Instantiated)
             {
-                if (Singleton<AbstractGame>.Instance.InRaid && Camera.main.transform.position != null)
-                {
-                    var gameWorld = Singleton<GameWorld>.Instance;
-                    gameWorld.GetOrAddComponent<NoFallingDamageComponent>();
-
-                    var player = gameWorld.MainPlayer;
-                    Logger.LogDebug("DadGamerMode: Setting Falling Damage");
-
-                    player.ActiveHealthController.FallSafeHeight = 999999f;
-
-                }
+                var gameWorld = Singleton<GameWorld>.Instance;
+                gameWorld.GetOrAddComponent<NoFallingDamageComponent>();
             }
-            catch { }
+        }
+
+        private static void Disable()
+        {
+            if (!dadGamerPlugin.NoFallingDamage.Value)
+            {
+                var gameWorld = Singleton<GameWorld>.Instance;
+
+                var player = gameWorld.MainPlayer;
+                Logger.LogDebug("DadGamerMode: Setting Falling Damage To Normal");
+
+                player.ActiveHealthController.FallSafeHeight = 1.8f;
+
+            }
         }
 
     }

@@ -4,6 +4,7 @@ using System.Reflection;
 using Aki.Reflection.Patching;
 using BepInEx;
 using BepInEx.Configuration;
+using dvize.DadGamerMode.Features;
 using EFT;
 using VersionChecker;
 
@@ -93,11 +94,12 @@ namespace dvize.GodModeTest
             protected override MethodBase GetTargetMethod() => typeof(GameWorld).GetMethod(nameof(GameWorld.OnGameStarted));
 
             [PatchPrefix]
-            public static void PatchPrefix()
+            private static void PatchPrefix()
             {
-                DadGamerMode.Features.CODModeComponent.Enable();
-                DadGamerMode.Features.MaxStaminaComponent.Enable();
-                DadGamerMode.Features.NoFallingDamageComponent.Enable();
+                CODModeComponent.Enable();
+                MaxStaminaComponent.Enable();
+                NoFallingDamageComponent.Enable();
+
             }
         }
     }

@@ -1,6 +1,8 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using Aki.Reflection.Patching;
 using Aki.SinglePlayer.Models.Healing;
+using Aki.SinglePlayer.Utils.Healing;
 using Comfort.Common;
 using dvize.GodModeTest;
 using EFT;
@@ -12,37 +14,60 @@ namespace dvize.DadGamerMode.Patches
     {
         private static readonly EBodyPart[] critBodyParts = { EBodyPart.Stomach, EBodyPart.Head, EBodyPart.Chest };
         private static DamageInfo tmpDmg;
-        private static PlayerHealth playerStats;
+        private static ActiveHealthControllerClass healthController;
+        private static EFT.HealthSystem.ValueStruct currentHealth;
         protected override MethodBase GetTargetMethod()
         {
             return AccessTools.Method(typeof(ActiveHealthControllerClass), "DestroyBodyPart");
         }
 
         [PatchPrefix]
-        static bool Prefix(ActiveHealthControllerClass __instance, EBodyPart bodyPart, EDamageType damageType)
+        private static bool Prefix(ActiveHealthControllerClass __instance, EBodyPart bodyPart, EDamageType damageType)
         {
-            //only care about your player
-            if (__instance.Player != null && __instance.Player.IsYourPlayer)
+            try
             {
-                playerStats = Singleton<PlayerHealth>.Instance;
-
-                //if CODMode is enabled and bleeding damage is disabled
-                if (dadGamerPlugin.CODModeToggle.Value && 
-                    !dadGamerPlugin.CODBleedingDamageToggle.Value)
+                //only care about your player
+                if (__instance.Player != null
+                    && __instance.Player.IsYourPlayer)
                 {
-                    //we don't want to destroy body parts if we are bleeding
-                    return false;
+                    //get the component HealthListener
+                    healthController = __instance.Player.ActiveHealthController;
+                    currentHealth = healthController.GetBodyPartHealth(bodyPart, false);
+
+                    //if CODMode is enabled and bleeding damage is disabled
+                    if (dadGamerPlugin.CODModeToggle.Value &&
+                        !dadGamerPlugin.CODBleedingDamageToggle.Value)
+                    {
+                        //we don't want to destroy body parts if we are bleeding
+                        return false;
+                    }
+
+                    //if bleeding damage is enabled, we don't want to destroy critical body parts
+                    if (dadGamerPlugin.CODModeToggle.Value &&
+                        dadGamerPlugin.CODBleedingDamageToggle.Value)
+                    {
+                        //if we are a critical body part return false
+                        if (Array.Exists(critBodyParts, element => element == bodyPart))
+                        {
+                            return false;
+                        }
+
+                    }
+
+                    //if keep1Health is enabled
+                    if (dadGamerPlugin.Keep1Health.Value)
+                    {
+                        currentHealth.Current = 1f;
+                        return false;
+                    }
+
+
                 }
 
-                //if keep1Health is enabled
-                if (dadGamerPlugin.Keep1Health.Value)
-                {
-                    //any part should have 1 health.. lets just set the current health to 1
-                    var change = 1 - playerStats.Health[bodyPart].Current;
-                    playerStats.Health[bodyPart].ChangeHealth(1f);
-
-                    return false;
-                }
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e);
             }
 
             return true;

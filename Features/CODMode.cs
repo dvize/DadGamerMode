@@ -1,4 +1,4 @@
-﻿using Aki.SinglePlayer.Models.Healing;
+﻿using System.Collections;
 using BepInEx.Logging;
 using Comfort.Common;
 using dvize.GodModeTest;
@@ -9,18 +9,19 @@ namespace dvize.DadGamerMode.Features
 {
     internal class CODModeComponent : MonoBehaviour
     {
-        private static float timeSinceLastHit = 0f;
-        private static float newHealRate = 0f;
         private static Player player;
-        private static PlayerHealth playerStats;
+        private static ActiveHealthControllerClass healthController;
+        private static float timeSinceLastHit = 0f;
+        private static bool isRegenerating = false;
+        private static DamageInfo tmpDmg;
 
-        private static readonly EBodyPart[] bodyPartsDict = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg,
-            EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
+        private readonly EBodyPart[] bodyPartsDict = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg,
+EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
+
         protected static ManualLogSource Logger
         {
             get; private set;
         }
-
         private CODModeComponent()
         {
             if (Logger == null)
@@ -28,95 +29,90 @@ namespace dvize.DadGamerMode.Features
                 Logger = BepInEx.Logging.Logger.CreateLogSource(nameof(CODModeComponent));
             }
         }
-
-        private void Update()
+        internal static void Enable()
         {
-            //since its enabled
-            if (dadGamerPlugin.CODModeToggle.Value)
+            if (Singleton<IBotGame>.Instantiated)
             {
-                //track timeSinceLastHit since its enabled
-                timeSinceLastHit += Time.unscaledDeltaTime;
+                var gameWorld = Singleton<GameWorld>.Instance;
+                gameWorld.GetOrAddComponent<CODModeComponent>();
 
-                runCODMode();
+                Logger.LogDebug("DadGamerMode: CODModeComponent enabled");
             }
+        }
+        private void Start()
+        {
+            player = Singleton<GameWorld>.Instance.MainPlayer;
+            healthController = player.ActiveHealthController;
 
+            player.OnPlayerDeadOrUnspawn += Player_OnPlayerDeadOrUnspawn;
+            player.BeingHitAction += Player_BeingHitAction;
         }
 
-        void runCODMode()
+        void Update()
         {
-            playerStats = Singleton<PlayerHealth>.Instance;
-
-            //remove negative effects every frame unless bleeding damage toggled
-            foreach (EBodyPart limb in bodyPartsDict)
+            if (dadGamerPlugin.CODModeToggle.Value)
             {
-                // Remove negative effects only if bleeding damage is enabled.
-                if (dadGamerPlugin.CODBleedingDamageToggle.Value && 
-                    playerStats != null)
+                timeSinceLastHit += Time.unscaledDeltaTime;
+
+                if (timeSinceLastHit >= dadGamerPlugin.CODModeHealWait.Value)
                 {
-                    playerStats.Health[limb].RemoveAllEffects();
+                    if (!isRegenerating)
+                    {
+                        isRegenerating = true;
+                        StartCoroutine(Heal());
+                    }
                 }
             }
+        }
 
-            //heal player if time passed the CODModeHealWait value
-            if (timeSinceLastHit >= dadGamerPlugin.CODModeHealWait.Value &&
-                playerStats != null)
+
+        private IEnumerator Heal()
+        {
+            while (isRegenerating && dadGamerPlugin.CODModeToggle.Value)
             {
-                newHealRate = dadGamerPlugin.CODModeHealRate.Value * Time.unscaledDeltaTime;
-
-                //Logger.LogDebug($"timeSinceLastHit: {timeSinceLastHit}");
-                try
+                // Remove negative effects every frame unless bleeding damage is toggled
+                if (!dadGamerPlugin.CODBleedingDamageToggle.Value)
                 {
                     foreach (EBodyPart limb in bodyPartsDict)
                     {
-                        playerStats.Health[limb].ChangeHealth(newHealRate);
+                        // Remove negative effects only if bleeding damage is disabled.
+                        healthController.RemoveNegativeEffects(limb);
                     }
                 }
-                catch
+
+                // Heal player if time passed the CODModeHealWait value
+                float newHealRate = dadGamerPlugin.CODModeHealRate.Value * Time.unscaledDeltaTime;
+
+                foreach (EBodyPart limb in bodyPartsDict)
                 {
+                    healthController.ChangeHealth(limb, newHealRate, tmpDmg);
                 }
+
+                // Wait for the next frame before continuing
+                yield return null;
             }
-
         }
-
-        public static void Enable()
+        private void Disable()
         {
-            try
+            if (player != null)
             {
-                if (Singleton<AbstractGame>.Instance.InRaid && Camera.main.transform.position != null)
-                {
-                    var gameWorld = Singleton<GameWorld>.Instance;
-                    gameWorld.GetOrAddComponent<CODModeComponent>();
-
-                    var player = gameWorld.MainPlayer;
-                    Logger.LogDebug("DadGamerMode: Attaching CODMode Events");
-
-                    player.OnPlayerDeadOrUnspawn += Player_OnPlayerDeadOrUnspawn;
-                    player.BeingHitAction += Player_BeingHitAction;
-
-                }
+                player.OnPlayerDeadOrUnspawn -= Player_OnPlayerDeadOrUnspawn;
+                player.BeingHitAction -= Player_BeingHitAction;
             }
-            catch { }
         }
 
-        private static void Player_BeingHitAction(DamageInfo arg1, EBodyPart arg2, float arg3)
+        private void Player_BeingHitAction(DamageInfo arg1, EBodyPart arg2, float arg3)
         {
+            //Logger.LogDebug("DadGamerMode: Player_BeingHitAction called");
             timeSinceLastHit = 0f;
+            isRegenerating = false;
+            StopCoroutine(Heal());
         }
 
-        public static void Disable()
-        {
-            var player = Singleton<GameWorld>.Instance.MainPlayer;
 
-            //unattach events
-            player.OnPlayerDeadOrUnspawn -= Player_OnPlayerDeadOrUnspawn;
-            player.BeingHitAction -= Player_BeingHitAction;
-        }
-
-        private static void Player_OnPlayerDeadOrUnspawn(Player player)
+        private void Player_OnPlayerDeadOrUnspawn(Player player)
         {
-            //unattach events
-            player.OnPlayerDeadOrUnspawn -= Player_OnPlayerDeadOrUnspawn;
-            player.BeingHitAction -= Player_BeingHitAction;
+            Disable();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using BepInEx.Logging;
 using Comfort.Common;
+using dvize.GodModeTest;
 using EFT;
 using UnityEngine;
 
@@ -7,7 +8,7 @@ namespace dvize.DadGamerMode.Features
 {
     internal class MaxStaminaComponent : MonoBehaviour
     {
-        Player player;
+        private Player player;
         protected static ManualLogSource Logger
         {
             get; private set;
@@ -21,28 +22,29 @@ namespace dvize.DadGamerMode.Features
             }
         }
 
-        private void Update()
+        private void Start()
         {
             player = Singleton<GameWorld>.Instance.MainPlayer;
-            player.Physical.Stamina.Current = player.Physical.Stamina.TotalCapacity.Value;
-            player.Physical.HandsStamina.Current = player.Physical.HandsStamina.TotalCapacity.Value;
-            player.Physical.Oxygen.Current = player.Physical.Oxygen.TotalCapacity.Value;
+        }
+        private void Update()
+        {
+            if (dadGamerPlugin.MaxStaminaToggle.Value)
+            {
+                player.Physical.Stamina.Current = player.Physical.Stamina.TotalCapacity.Value;
+                player.Physical.HandsStamina.Current = player.Physical.HandsStamina.TotalCapacity.Value;
+                player.Physical.Oxygen.Current = player.Physical.Oxygen.TotalCapacity.Value;
+            }
         }
 
         public static void Enable()
         {
-            try
+            if (Singleton<IBotGame>.Instantiated)
             {
-                if (Singleton<AbstractGame>.Instance.InRaid && Camera.main.transform.position != null)
-                {
-                    var gameWorld = Singleton<GameWorld>.Instance;
-                    gameWorld.GetOrAddComponent<MaxStaminaComponent>();
+                var gameWorld = Singleton<GameWorld>.Instance;
+                gameWorld.GetOrAddComponent<MaxStaminaComponent>();
 
-                    var player = gameWorld.MainPlayer;
-                    Logger.LogDebug("DadGamerMode: Setting Max Stamina");
-                }
+                Logger.LogDebug("DadGamerMode: Setting Max Stamina");
             }
-            catch { }
         }
     }
 }
