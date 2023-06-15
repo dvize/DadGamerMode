@@ -32,6 +32,6 @@ using VersionChecker;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.6.1.0")]
-[assembly: AssemblyFileVersion("1.6.1.0")]
-[assembly: TarkovVersion(23043)]
+[assembly: AssemblyVersion("1.6.4.0")]
+[assembly: AssemblyFileVersion("1.6.4.0")]
+[assembly: TarkovVersion(23399)]

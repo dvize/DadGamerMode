@@ -1,5 +1,5 @@
 # Fetch the version from EscapeFromTarkov.exe
-$tarkovPath = 'F:\SPT-AKI\EscapeFromTarkov.exe'
+$tarkovPath = 'F:\SPT-AKI-DEV\EscapeFromTarkov.exe'
 $tarkovVersion = (Get-Item -Path $tarkovPath).VersionInfo.FileVersionRaw.Revision
 
 # Update AssemblyVersion

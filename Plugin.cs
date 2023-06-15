@@ -10,7 +10,7 @@ using VersionChecker;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.6.1")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.6.4")]
 
     public class dadGamerPlugin : BaseUnityPlugin
     {
