@@ -10,7 +10,7 @@ using VersionChecker;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.6.5")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.6.6")]
 
     public class dadGamerPlugin : BaseUnityPlugin
     {
@@ -22,6 +22,12 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
+        public static ConfigEntry<string> Keep1HealthSelection
+        {
+            get; set;
+        }
+        //list of values for Keep1HealthSelection
+        public string[] Keep1HealthSelectionList = new string[] { "All", "Head And Thorax" };
         public static ConfigEntry<Boolean> NoFallingDamage
         {
             get; set;
@@ -59,17 +65,38 @@ namespace dvize.GodModeTest
         {
             CheckEftVersion();
 
-            Godmode = Config.Bind("Health", "Godmode", false, "Invincible but Fall Damage Separate");
-            NoFallingDamage = Config.Bind("Health", "No Falling Damage", false, "No Falling Damage");
-            MaxStaminaToggle = Config.Bind("Health", "Infinite Stamina", false, "Stamina Never Drains");
-            Keep1Health = Config.Bind("Health", "Keep 1 Health", false, "Keeps your bodyparts from falling below 1 Health");
+            Godmode = Config.Bind("1. Health", "Godmode", false, new ConfigDescription("Makes You Invincible Except for Fall Damage",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 7 }));
 
-            CustomDamageModeVal = Config.Bind("Health", "% Damage Received Value", 100, "Set a Damage Threshold limit %");
-            IgnoreHeadShotDamage = Config.Bind("Health", "Ignore Headshot Damage", false, "Ignore headshot");
-            CODModeToggle = Config.Bind("COD", "CODMode", false, "If you don't die, gradually heals you and no blacked out limbs");
-            CODModeHealRate = Config.Bind("COD", "CODMode Heal Rate", 10f, "Sets how fast you heal");
-            CODModeHealWait = Config.Bind("COD", "CODMode Heal Wait", 10f, "Sets how long you wait to heal in seconds");
-            CODBleedingDamageToggle = Config.Bind("COD", "CODMode Bleeding Damage", false, "You still get bleeding and fractures if enabled");
+            Keep1Health = Config.Bind("1. Health", "Keep 1 Health", false, new ConfigDescription("Enable To Keep Body Parts Above 1 Health",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 6 }));
+
+            Keep1HealthSelection = Config.Bind("1. Health", "Keep 1 Health Selection", "All", new ConfigDescription("Select which body parts to keep above 1 health",
+                new AcceptableValueList<string>(Keep1HealthSelectionList), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 5 }));
+
+            IgnoreHeadShotDamage = Config.Bind("1. Health", "Ignore Headshot Damage", false, new ConfigDescription("Ignore Headshot Damage",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4 }));
+
+            CustomDamageModeVal = Config.Bind("1. Health", "% Damage Received Value", 100, new ConfigDescription("Set a Damage Threshold Limit",
+                new AcceptableValueRange<int>(0, 100), new ConfigurationManagerAttributes { IsAdvanced = false, ShowRangeAsPercent = true, Order = 3 }));
+
+            NoFallingDamage = Config.Bind("1. Health", "No Falling Damage", false, new ConfigDescription("No Falling Damage",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 2 }));
+
+            MaxStaminaToggle = Config.Bind("1. Health", "Infinite Stamina", false, new ConfigDescription("Stamina Never Drains",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
+
+            CODModeToggle = Config.Bind("2. COD", "CODMode", false, new ConfigDescription("Gradually heals all your damage over time including bleeds and fractures",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4 }));
+
+            CODModeHealRate = Config.Bind("2. COD", "CODMode Heal Rate", 10f, new ConfigDescription("Sets How Fast You Heal",
+                new AcceptableValueRange<float>(0f, 100f), new ConfigurationManagerAttributes { IsAdvanced = false, ShowRangeAsPercent = false, Order = 3 }));
+
+            CODModeHealWait = Config.Bind("2. COD", "CODMode Heal Wait", 10f, new ConfigDescription("Sets How Long You Have to Wait in Seconds with no damage before healing starts",
+                new AcceptableValueRange<float>(0f, 600f), new ConfigurationManagerAttributes { IsAdvanced = false, ShowRangeAsPercent = false, Order = 2 }));
+
+            CODBleedingDamageToggle = Config.Bind("2. COD", "CODMode Bleeding Damage", false, new ConfigDescription("You still get bleeding and fractures for COD Mode",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
 
 
             new NewGamePatch().Enable();

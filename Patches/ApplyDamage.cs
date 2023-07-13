@@ -2,6 +2,7 @@
 using System.Reflection;
 using Aki.Reflection.Patching;
 using dvize.GodModeTest;
+using EFT;
 using HarmonyLib;
 
 namespace dvize.DadGamerMode.Patches
@@ -51,11 +52,36 @@ namespace dvize.DadGamerMode.Patches
                     if (dadGamerPlugin.Keep1Health.Value &&
                         ((currentHealth.Current - damage) <= 0))
                     {
-                        damage = 0f;
-                        currentHealth.Current = 1f;
+                        if (dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax")
+                        {
+                            if (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest)
+                            {
+                                damage = currentHealth.Current - 2f;
+                                currentHealth.Current = 2f;
+                                return false;
+                            }
+                            else
+                            {
+                                if (currentHealth.AtMinimum)
+                                {
+                                    Logger.LogDebug("Destroyed body part: " + bodyPart.ToString());
+                                    healthController.DestroyBodyPart(bodyPart, EDamageType.Bullet);
 
-                        return false;
+                                    return false;
+                                }
+                            }
+                        }
+                        //Check if they want to keep head and thorax at 1 health or all body parts
+                        else if (dadGamerPlugin.Keep1HealthSelection.Value == "All")
+                        {
+                            damage = currentHealth.Current - 2f;
+                            currentHealth.Current = 2f;
+
+                            return false;
+                        }
+
                     }
+
                 }
             }
             catch (Exception e)

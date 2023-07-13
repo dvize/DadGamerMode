@@ -35,7 +35,6 @@ namespace dvize.DadGamerMode.Patches
                     if (dadGamerPlugin.CODModeToggle.Value &&
                         !dadGamerPlugin.CODBleedingDamageToggle.Value)
                     {
-                        //we don't want to destroy body parts if we are bleeding
                         return false;
                     }
 
@@ -54,8 +53,21 @@ namespace dvize.DadGamerMode.Patches
                     //if keep1Health is enabled
                     if (dadGamerPlugin.Keep1Health.Value)
                     {
-                        currentHealth.Current = 1f;
-                        return false;
+                        if (dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax")
+                        {
+                            if (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest)
+                            {
+                                return false;
+                            }
+                            else
+                            {
+                                return true;
+                            }
+                        }
+                        else if (dadGamerPlugin.Keep1HealthSelection.Value == "All")
+                        {
+                            return false;
+                        }
                     }
 
 
