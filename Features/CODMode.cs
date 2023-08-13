@@ -3,6 +3,7 @@ using BepInEx.Logging;
 using Comfort.Common;
 using dvize.GodModeTest;
 using EFT;
+using EFT.HealthSystem;
 using UnityEngine;
 
 namespace dvize.DadGamerMode.Features
@@ -10,7 +11,7 @@ namespace dvize.DadGamerMode.Features
     internal class CODModeComponent : MonoBehaviour
     {
         private static Player player;
-        private static ActiveHealthControllerClass healthController;
+        private static ActiveHealthController healthController;
         private static float timeSinceLastHit = 0f;
         private static bool isRegenerating = false;
         private static DamageInfo tmpDmg;

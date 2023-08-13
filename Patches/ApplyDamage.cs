@@ -3,21 +3,22 @@ using System.Reflection;
 using Aki.Reflection.Patching;
 using dvize.GodModeTest;
 using EFT;
+using EFT.HealthSystem;
 using HarmonyLib;
 
 namespace dvize.DadGamerMode.Patches
 {
     internal class ApplyDamage : ModulePatch
     {
-        private static ActiveHealthControllerClass healthController;
+        private static ActiveHealthController healthController;
         private static EFT.HealthSystem.ValueStruct currentHealth;
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(ActiveHealthControllerClass), "ApplyDamage");
+            return AccessTools.Method(typeof(ActiveHealthController), "ApplyDamage");
         }
 
         [PatchPrefix]
-        private static bool Prefix(ActiveHealthControllerClass __instance, ref float damage, EBodyPart bodyPart, DamageInfo damageInfo)
+        private static bool Prefix(ActiveHealthController __instance, ref float damage, EBodyPart bodyPart, DamageInfo damageInfo)
         {
             try
             {

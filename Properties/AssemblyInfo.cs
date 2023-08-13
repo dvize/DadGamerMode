@@ -33,5 +33,5 @@ using VersionChecker;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.6.7.0")]
-[assembly: AssemblyFileVersion("1.6.7.0")]
-[assembly: TarkovVersion(25206)]
+[assembly: AssemblyFileVersion("1.7.0.0")]
+[assembly: TarkovVersion(25800)]
