@@ -3,6 +3,7 @@ using System.Reflection;
 using Aki.Reflection.Patching;
 using dvize.GodModeTest;
 using EFT;
+using EFT.HealthSystem;
 using HarmonyLib;
 
 namespace dvize.DadGamerMode.Patches
@@ -11,15 +12,15 @@ namespace dvize.DadGamerMode.Patches
     {
         private static readonly EBodyPart[] critBodyParts = { EBodyPart.Stomach, EBodyPart.Head, EBodyPart.Chest };
         private static DamageInfo tmpDmg;
-        private static ActiveHealthControllerClass healthController;
+        private static ActiveHealthController healthController;
         private static EFT.HealthSystem.ValueStruct currentHealth;
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(ActiveHealthControllerClass), "DestroyBodyPart");
+            return AccessTools.Method(typeof(ActiveHealthController), "DestroyBodyPart");
         }
 
         [PatchPrefix]
-        private static bool Prefix(ActiveHealthControllerClass __instance, EBodyPart bodyPart, EDamageType damageType)
+        private static bool Prefix(ActiveHealthController __instance, EBodyPart bodyPart, EDamageType damageType)
         {
             try
             {
