@@ -32,11 +32,19 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
+        public static ConfigEntry<int> CustomHeadDamageModeVal
+        {
+            get; set;
+        }
         public static ConfigEntry<int> CustomDamageModeVal
         {
             get; set;
         }
         public static ConfigEntry<Boolean> IgnoreHeadShotDamage
+        {
+            get; set;
+        }
+        public static ConfigEntry<Boolean> PercentageHeadShotDamageOnly
         {
             get; set;
         }
@@ -66,18 +74,24 @@ namespace dvize.GodModeTest
             CheckEftVersion();
 
             Godmode = Config.Bind("1. Health", "Godmode", false, new ConfigDescription("Makes You Invincible Except for Fall Damage",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 7 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 9 }));
 
             Keep1Health = Config.Bind("1. Health", "Keep 1 Health", false, new ConfigDescription("Enable To Keep Body Parts Above 1 Health",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 6 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 8 }));
 
             Keep1HealthSelection = Config.Bind("1. Health", "Keep 1 Health Selection", "All", new ConfigDescription("Select which body parts to keep above 1 health",
-                new AcceptableValueList<string>(Keep1HealthSelectionList), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 5 }));
+                new AcceptableValueList<string>(Keep1HealthSelectionList), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 7 }));
 
             IgnoreHeadShotDamage = Config.Bind("1. Health", "Ignore Headshot Damage", false, new ConfigDescription("Ignore Headshot Damage",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 6 }));
 
-            CustomDamageModeVal = Config.Bind("1. Health", "% Damage Received Value", 100, new ConfigDescription("Set a Damage Threshold Limit",
+            PercentageHeadShotDamageOnly = Config.Bind("1. Health", "Percentage Headshot Damage", false, new ConfigDescription("Toggle Percentage Headshot Damage, will override all body percentage",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 5 }));
+
+            CustomHeadDamageModeVal = Config.Bind("1. Health", "% Damage Received Value (Only Head)", 100, new ConfigDescription("Set a Damage Threshold Limith and needs Percentage Headshot Damage toggled",
+                new AcceptableValueRange<int>(0, 100), new ConfigurationManagerAttributes { IsAdvanced = false, ShowRangeAsPercent = true, Order = 4 }));
+
+            CustomDamageModeVal = Config.Bind("1. Health", "% Damage Received Value (All Body)", 100, new ConfigDescription("Set a Damage Threshold Limit",
                 new AcceptableValueRange<int>(0, 100), new ConfigurationManagerAttributes { IsAdvanced = false, ShowRangeAsPercent = true, Order = 3 }));
 
             NoFallingDamage = Config.Bind("1. Health", "No Falling Damage", false, new ConfigDescription("No Falling Damage",

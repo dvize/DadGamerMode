@@ -49,6 +49,12 @@ namespace dvize.DadGamerMode.Patches
                         damage = damage * ((float)dadGamerPlugin.CustomDamageModeVal.Value / 100);
                     }
 
+                    if (bodyPart == EBodyPart.Head && dadGamerPlugin.PercentageHeadShotDamageOnly.Value)
+                    {
+                        //set damage early so we can use it in the keep1health check
+                        damage = damage * ((float)dadGamerPlugin.CustomHeadDamageModeVal.Value / 100);
+                    }
+
                     //if keep 1 health enabled, set damage to 0 
                     if (dadGamerPlugin.Keep1Health.Value &&
                         ((currentHealth.Current - damage) <= 0))
