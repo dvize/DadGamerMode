@@ -65,8 +65,14 @@ namespace dvize.DadGamerMode.Patches
                             {
                                 damage = currentHealth.Current - 2f;
                                 currentHealth.Current = 2f;
-                                return false;
+
+                                // Only allow the original function to run if we would be doing damage
+                                if (damage < 0f)
+                                {
+                                    return false;
+                                }
                             }
+                            // Still allow other parts to be destroyed, but not overdamage the head/thorax
                             else
                             {
                                 if (currentHealth.AtMinimum)
@@ -84,11 +90,13 @@ namespace dvize.DadGamerMode.Patches
                             damage = currentHealth.Current - 2f;
                             currentHealth.Current = 2f;
 
-                            return false;
+                            // Only allow the original function to run if we would be doing damage
+                            if (damage < 0f)
+                            {
+                                return false;
+                            }
                         }
-
                     }
-
                 }
             }
             catch (Exception e)
