@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Threading.Tasks;
 using BepInEx.Logging;
 using Comfort.Common;
 using dvize.GodModeTest;
@@ -10,11 +11,13 @@ namespace dvize.DadGamerMode.Features
 {
     internal class CODModeComponent : MonoBehaviour
     {
-        private static Player player;
-        private static ActiveHealthController healthController;
-        private static float timeSinceLastHit = 0f;
-        private static bool isRegenerating = false;
-        private static DamageInfo tmpDmg;
+        private Player player;
+        private ActiveHealthController healthController;
+        private float timeSinceLastHit = 0f;
+        private bool isRegenerating = false;
+        private float newHealRate;
+        private DamageInfo tmpDmg;
+        private EFT.HealthSystem.ValueStruct currentHealth;
 
         private readonly EBodyPart[] bodyPartsDict = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg,
 EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
@@ -49,7 +52,7 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             player.BeingHitAction += Player_BeingHitAction;
         }
 
-        void Update()
+        private async void Update()
         {
             if (dadGamerPlugin.CODModeToggle.Value)
             {
@@ -60,37 +63,35 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
                     if (!isRegenerating)
                     {
                         isRegenerating = true;
-                        StartCoroutine(Heal());
                     }
+
+                    StartHealingAsync();
                 }
             }
         }
 
-
-        private IEnumerator Heal()
+        private async Task StartHealingAsync()
         {
-            while (isRegenerating && dadGamerPlugin.CODModeToggle.Value)
+            if (isRegenerating && dadGamerPlugin.CODModeToggle.Value)
             {
-                // Remove negative effects every frame unless bleeding damage is toggled
-                if (!dadGamerPlugin.CODBleedingDamageToggle.Value)
+                newHealRate = dadGamerPlugin.CODModeHealRate.Value * Time.unscaledDeltaTime;
+
+                foreach (var limb in bodyPartsDict)
                 {
-                    foreach (EBodyPart limb in bodyPartsDict)
+                    currentHealth = healthController.GetBodyPartHealth(limb, false);
+
+                    if (!dadGamerPlugin.CODBleedingDamageToggle.Value)
                     {
-                        // Remove negative effects only if bleeding damage is disabled.
                         healthController.RemoveNegativeEffects(limb);
+                    }
+
+                    if (!currentHealth.AtMaximum)
+                    {
+                        healthController.ChangeHealth(limb, newHealRate, tmpDmg);
                     }
                 }
 
-                // Heal player if time passed the CODModeHealWait value
-                float newHealRate = dadGamerPlugin.CODModeHealRate.Value * Time.unscaledDeltaTime;
-
-                foreach (EBodyPart limb in bodyPartsDict)
-                {
-                    healthController.ChangeHealth(limb, newHealRate, tmpDmg);
-                }
-
-                // Wait for the next frame before continuing
-                yield return null;
+                await Task.Yield();
             }
         }
         private void Disable()
@@ -107,7 +108,6 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             //Logger.LogDebug("DadGamerMode: Player_BeingHitAction called");
             timeSinceLastHit = 0f;
             isRegenerating = false;
-            StopCoroutine(Heal());
         }
 
 
