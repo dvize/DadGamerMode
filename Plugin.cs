@@ -11,7 +11,7 @@ using VersionChecker;
 namespace dvize.GodModeTest
 {
     [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.7.2")]
-    [BepInDependency("com.spt-aki.core", "3.7.1")]
+    [BepInDependency("com.spt-aki.core", "3.7.4")]
     public class dadGamerPlugin : BaseUnityPlugin
     {
         public static ConfigEntry<Boolean> Godmode
