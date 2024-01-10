@@ -58,20 +58,13 @@ namespace dvize.DadGamerMode.Patches
 
                     //if keep 1 health enabled, set damage to 0 
                     if (dadGamerPlugin.Keep1Health.Value &&
-                        ((currentHealth.Current - damage) <= 0))
+                        ((currentHealth.Current - damage) <= 2f))
                     {
                         if (dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax")
                         {
                             if (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest)
                             {
-                                damage = currentHealth.Current - 2f;
-                                currentHealth.Current = 2f;
-
-                                // Only allow the original function to run if we would be doing damage
-                                if (damage < 0f)
-                                {
                                     return false;
-                                }
                             }
                             // Still allow other parts to be destroyed, but not overdamage the head/thorax
                             else
@@ -88,14 +81,7 @@ namespace dvize.DadGamerMode.Patches
                         //Check if they want to keep head and thorax at 1 health or all body parts
                         else if (dadGamerPlugin.Keep1HealthSelection.Value == "All")
                         {
-                            damage = currentHealth.Current - 2f;
-                            currentHealth.Current = 2f;
-
-                            // Only allow the original function to run if we would be doing damage
-                            if (damage < 0f)
-                            {
                                 return false;
-                            }
                         }
                     }
                 }
