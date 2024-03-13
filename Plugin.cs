@@ -10,8 +10,8 @@ using VersionChecker;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.7.4")]
-    [BepInDependency("com.spt-aki.core", "3.7.6")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.7.5")]
+    //[BepInDependency("com.spt-aki.core", "3.8.0")]
     public class dadGamerPlugin : BaseUnityPlugin
     {
         public static ConfigEntry<Boolean> Godmode
@@ -52,6 +52,17 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
+
+        public static ConfigEntry<Boolean> MaxHydrationToggle
+        {
+            get; set;
+        }
+
+        public static ConfigEntry<Boolean> MaxEnergyToggle
+        {
+            get; set;
+        }
+
         public static ConfigEntry<Boolean> CODModeToggle
         {
             get; set;
@@ -68,10 +79,13 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
+        public static ConfigEntry<float> ReloadSpeed
+        {
+            get; set;
+        }
 
         internal void Awake()
         {
-            CheckEftVersion();
 
             Godmode = Config.Bind("1. Health", "Godmode", false, new ConfigDescription("Makes You Invincible Except for Fall Damage",
                 null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 9 }));
@@ -94,12 +108,6 @@ namespace dvize.GodModeTest
             CustomDamageModeVal = Config.Bind("1. Health", "% Damage Received Value (All Body)", 100, new ConfigDescription("Set a Damage Threshold Limit",
                 new AcceptableValueRange<int>(0, 100), new ConfigurationManagerAttributes { IsAdvanced = false, ShowRangeAsPercent = true, Order = 3 }));
 
-            NoFallingDamage = Config.Bind("1. Health", "No Falling Damage", false, new ConfigDescription("No Falling Damage",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 2 }));
-
-            MaxStaminaToggle = Config.Bind("1. Health", "Infinite Stamina", false, new ConfigDescription("Stamina Never Drains",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
-
             CODModeToggle = Config.Bind("2. COD", "CODMode", false, new ConfigDescription("Gradually heals all your damage over time including bleeds and fractures",
                 null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4 }));
 
@@ -112,24 +120,28 @@ namespace dvize.GodModeTest
             CODBleedingDamageToggle = Config.Bind("2. COD", "CODMode Bleeding Damage", false, new ConfigDescription("You still get bleeding and fractures for COD Mode",
                 null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
 
+            NoFallingDamage = Config.Bind("3. QOL", "No Falling Damage", false, new ConfigDescription("No Falling Damage",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 5 }));
+
+            MaxStaminaToggle = Config.Bind("3. QOL", "Infinite Stamina", false, new ConfigDescription("Stamina Never Drains",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4 }));
+
+            MaxEnergyToggle = Config.Bind("3. QOL", "Infinite Energy", false, new ConfigDescription("Energy Never Drains so no eating",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 3}));
+
+            MaxHydrationToggle = Config.Bind("3. QOL", "Infinite Hydration", false, new ConfigDescription("Hydration never drains so no drinking",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 2 }));
+
+            ReloadSpeed = Config.Bind("3. QOL", "ReloadSpeed", 0.85f, new ConfigDescription("Magazine Reload Speed Multiplier (smaller is faster)",
+                new AcceptableValueRange<float>(0f, 0.85f), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
+
+
 
             new NewGamePatch().Enable();
             new DadGamerMode.Patches.ApplyDamage().Enable();
             new DadGamerMode.Patches.DestroyBodyPartPatch().Enable();
         }
 
-        private void CheckEftVersion()
-        {
-            // Make sure the version of EFT being run is the correct version
-            int currentVersion = FileVersionInfo.GetVersionInfo(BepInEx.Paths.ExecutablePath).FilePrivatePart;
-            int buildVersion = TarkovVersion.BuildVersion;
-            if (currentVersion != buildVersion)
-            {
-                Logger.LogError($"ERROR: This version of {Info.Metadata.Name} v{Info.Metadata.Version} was built for Tarkov {buildVersion}, but you are running {currentVersion}. Please download the correct plugin version.");
-                EFT.UI.ConsoleScreen.LogError($"ERROR: This version of {Info.Metadata.Name} v{Info.Metadata.Version} was built for Tarkov {buildVersion}, but you are running {currentVersion}. Please download the correct plugin version.");
-                throw new Exception($"Invalid EFT Version ({currentVersion} != {buildVersion})");
-            }
-        }
         internal class NewGamePatch : ModulePatch
         {
             protected override MethodBase GetTargetMethod() => typeof(GameWorld).GetMethod(nameof(GameWorld.OnGameStarted));
@@ -139,8 +151,10 @@ namespace dvize.GodModeTest
             {
                 CODModeComponent.Enable();
                 MaxStaminaComponent.Enable();
+                HydrationComponent.Enable();
+                EnergyComponent.Enable();
                 NoFallingDamageComponent.Enable();
-
+                MagReloadSpeed.Enable();
             }
         }
     }

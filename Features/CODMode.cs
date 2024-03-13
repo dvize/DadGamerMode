@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Threading.Tasks;
 using BepInEx.Logging;
 using Comfort.Common;
@@ -11,15 +12,16 @@ namespace dvize.DadGamerMode.Features
 {
     internal class CODModeComponent : MonoBehaviour
     {
-        private Player player;
-        private ActiveHealthController healthController;
-        private float timeSinceLastHit = 0f;
-        private bool isRegenerating = false;
-        private float newHealRate;
-        private DamageInfo tmpDmg;
-        private EFT.HealthSystem.ValueStruct currentHealth;
+        private static Player player;
+        private static ActiveHealthController healthController;
+        private static float timeSinceLastHit = 0f;
+        private static bool isRegenerating = false;
+        private static float newHealRate;
+        private static DamageInfo tmpDmg;
+        private static HealthValue currentHealth;
+        private static int frameCount = 0;
 
-        private readonly EBodyPart[] bodyPartsDict = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg,
+        private static readonly EBodyPart[] bodyPartsDict = { EBodyPart.Stomach, EBodyPart.Chest, EBodyPart.Head, EBodyPart.RightLeg,
 EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
 
         protected static ManualLogSource Logger
@@ -47,51 +49,75 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
         {
             player = Singleton<GameWorld>.Instance.MainPlayer;
             healthController = player.ActiveHealthController;
+            isRegenerating= false;
+            timeSinceLastHit = 0f;
+            newHealRate = 0f;
+            tmpDmg = new DamageInfo();
+            currentHealth = null;
+            frameCount = 0;
 
             player.OnPlayerDeadOrUnspawn += Player_OnPlayerDeadOrUnspawn;
             player.BeingHitAction += Player_BeingHitAction;
+            healthController.EffectAddedEvent += HealthController_EffectAddedEvent;
         }
 
-        private async void Update()
+        private void HealthController_EffectAddedEvent(IEffect effect)
+        {
+            /*Logger.LogWarning("Effect added is of type: " + effect.Type);
+            Logger.LogWarning("The Effect state is: " + effect.State);
+            Logger.LogWarning("The BodyPart is: " + effect.BodyPart);
+            Logger.LogWarning("The Effect Strength is: " + effect.Strength);*/
+
+            if(effect.Type == typeof(GInterface245) || effect.Type == typeof(GInterface259) || effect.Type == typeof(GInterface244))
+            {
+                //GInterface244 is bleeding
+                //GInterface245 is fracture
+                //GInterface259 is pain
+
+                healthController.RemoveEffectFromList((ActiveHealthController.GClass2415)effect);
+                Logger.LogWarning("Effect is a Fracture, Bleeding, or Pain and has been removed");
+            }
+        }
+
+        private void Update()
         {
             if (dadGamerPlugin.CODModeToggle.Value)
             {
+                frameCount++;
                 timeSinceLastHit += Time.unscaledDeltaTime;
 
-                if (timeSinceLastHit >= dadGamerPlugin.CODModeHealWait.Value)
+                if (frameCount >= 60) // Check every 60 frames instead
                 {
-                    if (!isRegenerating)
-                    {
-                        isRegenerating = true;
-                    }
+                    frameCount = 0;
 
-                    StartHealingAsync();
+                    if (timeSinceLastHit >= dadGamerPlugin.CODModeHealWait.Value)
+                    {
+                        if (!isRegenerating)
+                        {
+                            isRegenerating = true;
+                        }
+
+                        StartHealing();
+                    }
                 }
             }
         }
 
-        private async Task StartHealingAsync()
+        private void StartHealing()
         {
             if (isRegenerating && dadGamerPlugin.CODModeToggle.Value)
             {
-                newHealRate = dadGamerPlugin.CODModeHealRate.Value * Time.unscaledDeltaTime;
+                newHealRate = dadGamerPlugin.CODModeHealRate.Value;
 
                 foreach (var limb in bodyPartsDict)
                 {
-                    currentHealth = healthController.GetBodyPartHealth(limb, false);
-
-                    if (!dadGamerPlugin.CODBleedingDamageToggle.Value)
-                    {
-                        healthController.RemoveNegativeEffects(limb);
-                    }
+                    currentHealth = healthController.Dictionary_0[limb].Health;
 
                     if (!currentHealth.AtMaximum)
                     {
-                        healthController.ChangeHealth(limb, newHealRate, tmpDmg);
+                        currentHealth.Current += newHealRate;
                     }
                 }
-
-                await Task.Yield();
             }
         }
         private void Disable()
@@ -100,6 +126,7 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             {
                 player.OnPlayerDeadOrUnspawn -= Player_OnPlayerDeadOrUnspawn;
                 player.BeingHitAction -= Player_BeingHitAction;
+                healthController.EffectAddedEvent -= HealthController_EffectAddedEvent;
             }
         }
 

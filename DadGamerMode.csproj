@@ -51,7 +51,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>F:\SPT-AKI-DEV\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="BepInEx, Version=5.4.21.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="BepInEx, Version=5.4.22.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>F:\SPT-AKI-DEV\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
@@ -91,8 +91,11 @@
   <ItemGroup>
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="Features\CODMode.cs" />
+    <Compile Include="Features\Hydration.cs" />
+    <Compile Include="Features\Energy.cs" />
     <Compile Include="Features\MaxStamina.cs" />
     <Compile Include="Features\FallingDamage.cs" />
+    <Compile Include="Features\MagReloadSpeed.cs" />
     <Compile Include="Patches\ApplyDamage.cs" />
     <Compile Include="Patches\DestroyBodyPart.cs" />
     <Compile Include="Plugin.cs" />
