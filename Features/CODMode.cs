@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Threading.Tasks;
-using BepInEx.Logging;
+﻿using BepInEx.Logging;
 using Comfort.Common;
 using dvize.GodModeTest;
 using EFT;
@@ -49,7 +46,7 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
         {
             player = Singleton<GameWorld>.Instance.MainPlayer;
             healthController = player.ActiveHealthController;
-            isRegenerating= false;
+            isRegenerating = false;
             timeSinceLastHit = 0f;
             newHealRate = 0f;
             tmpDmg = new DamageInfo();
@@ -68,7 +65,7 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             Logger.LogWarning("The BodyPart is: " + effect.BodyPart);
             Logger.LogWarning("The Effect Strength is: " + effect.Strength);*/
 
-            if(effect.Type == typeof(GInterface245) || effect.Type == typeof(GInterface259) || effect.Type == typeof(GInterface244))
+            if (effect.Type == typeof(GInterface245) || effect.Type == typeof(GInterface259) || effect.Type == typeof(GInterface244))
             {
                 //GInterface244 is bleeding
                 //GInterface245 is fracture

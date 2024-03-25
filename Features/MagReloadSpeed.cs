@@ -1,5 +1,4 @@
-﻿using BepInEx.Logging;
-using Comfort.Common;
+﻿using Comfort.Common;
 using dvize.GodModeTest;
 using EFT;
 using UnityEngine;

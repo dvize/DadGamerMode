@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Reflection;
 using Aki.Reflection.Patching;
 using BepInEx;
 using BepInEx.Configuration;
 using dvize.DadGamerMode.Features;
 using EFT;
-using VersionChecker;
 
 namespace dvize.GodModeTest
 {
@@ -127,7 +125,7 @@ namespace dvize.GodModeTest
                 null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4 }));
 
             MaxEnergyToggle = Config.Bind("3. QOL", "Infinite Energy", false, new ConfigDescription("Energy Never Drains so no eating",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 3}));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 3 }));
 
             MaxHydrationToggle = Config.Bind("3. QOL", "Infinite Hydration", false, new ConfigDescription("Hydration never drains so no drinking",
                 null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 2 }));
