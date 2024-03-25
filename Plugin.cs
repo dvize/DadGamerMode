@@ -10,7 +10,7 @@ using VersionChecker;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.7.5")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.0")]
     //[BepInDependency("com.spt-aki.core", "3.8.0")]
     public class dadGamerPlugin : BaseUnityPlugin
     {
@@ -134,7 +134,6 @@ namespace dvize.GodModeTest
 
             ReloadSpeed = Config.Bind("3. QOL", "ReloadSpeed", 0.85f, new ConfigDescription("Magazine Reload Speed Multiplier (smaller is faster)",
                 new AcceptableValueRange<float>(0f, 0.85f), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
-
 
 
             new NewGamePatch().Enable();
