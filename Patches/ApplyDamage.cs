@@ -85,6 +85,14 @@ namespace dvize.DadGamerMode.Patches
                         }
                     }
                 }
+                else
+                {
+                    //multiply damage by multiplier if a type of player
+                    if(__instance.Player != null)
+                    {
+                        damage = damage * dadGamerPlugin.enemyDamageMultiplier.Value;
+                    }
+                }
             }
             catch (Exception e)
             {

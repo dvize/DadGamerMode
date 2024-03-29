@@ -82,6 +82,16 @@ namespace dvize.GodModeTest
             get; set;
         }
 
+        public static ConfigEntry<int> enemyDamageMultiplier
+        {
+            get; set;
+        }
+
+        public static ConfigEntry<int> totalWeightReductionPercentage
+        {
+            get; set;
+        }
+
         internal void Awake()
         {
 
@@ -119,24 +129,30 @@ namespace dvize.GodModeTest
                 null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
 
             NoFallingDamage = Config.Bind("3. QOL", "No Falling Damage", false, new ConfigDescription("No Falling Damage",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 5 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 7 }));
 
             MaxStaminaToggle = Config.Bind("3. QOL", "Infinite Stamina", false, new ConfigDescription("Stamina Never Drains",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 6 }));
 
             MaxEnergyToggle = Config.Bind("3. QOL", "Infinite Energy", false, new ConfigDescription("Energy Never Drains so no eating",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 3 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 5 }));
 
             MaxHydrationToggle = Config.Bind("3. QOL", "Infinite Hydration", false, new ConfigDescription("Hydration never drains so no drinking",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 2 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4}));
 
             ReloadSpeed = Config.Bind("3. QOL", "ReloadSpeed", 0.85f, new ConfigDescription("Magazine Reload Speed Multiplier (smaller is faster)",
-                new AcceptableValueRange<float>(0f, 0.85f), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
+                new AcceptableValueRange<float>(0f, 0.85f), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 3 }));
 
+            enemyDamageMultiplier = Config.Bind("3. QOL", "Enemy Damage Multiplier", 1, new ConfigDescription("Multiply Damage Given to Enemies (Default is 1)",
+                new AcceptableValueRange<int>(1, 20), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 2 }));
+
+            totalWeightReductionPercentage = Config.Bind("3. QOL", "Total Weight % Reduction", 0, new ConfigDescription("Percentage to reduce your characters total weight",
+                new AcceptableValueRange<int>(0, 100), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
 
             new NewGamePatch().Enable();
             new DadGamerMode.Patches.ApplyDamage().Enable();
             new DadGamerMode.Patches.DestroyBodyPartPatch().Enable();
+            new DadGamerMode.Patches.OnWeightUpdatedPatch().Enable();
         }
 
         internal class NewGamePatch : ModulePatch
