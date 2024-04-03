@@ -99,6 +99,7 @@
     <Compile Include="Patches\ApplyDamage.cs" />
     <Compile Include="Patches\DestroyBodyPart.cs" />
     <Compile Include="Patches\OnWeightUpdatedPatch.cs" />
+    <Compile Include="Patches\UpdateWeightLimitsPatch.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="VersionChecker\TarkovVersion.cs" />

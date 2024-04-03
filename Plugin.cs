@@ -8,7 +8,7 @@ using EFT;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.0")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.1")]
     //[BepInDependency("com.spt-aki.core", "3.8.0")]
     public class dadGamerPlugin : BaseUnityPlugin
     {
@@ -152,7 +152,8 @@ namespace dvize.GodModeTest
             new NewGamePatch().Enable();
             new DadGamerMode.Patches.ApplyDamage().Enable();
             new DadGamerMode.Patches.DestroyBodyPartPatch().Enable();
-            new DadGamerMode.Patches.OnWeightUpdatedPatch().Enable();
+            //new DadGamerMode.Patches.OnWeightUpdatedPatch().Enable();
+            //new DadGamerMode.Patches.UpdateWeightLimitsPatch().Enable();
         }
 
         internal class NewGamePatch : ModulePatch

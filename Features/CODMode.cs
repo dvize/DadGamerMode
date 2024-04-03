@@ -5,6 +5,8 @@ using EFT;
 using EFT.HealthSystem;
 using UnityEngine;
 
+using AbstractIEffect = EFT.HealthSystem.ActiveHealthController.GClass2415;
+
 namespace dvize.DadGamerMode.Features
 {
     internal class CODModeComponent : MonoBehaviour
@@ -60,19 +62,26 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
 
         private void HealthController_EffectAddedEvent(IEffect effect)
         {
-            /*Logger.LogWarning("Effect added is of type: " + effect.Type);
+
+#if DEBUG
+            Logger.LogWarning("Effect added is of type: " + effect.Type);
             Logger.LogWarning("The Effect state is: " + effect.State);
             Logger.LogWarning("The BodyPart is: " + effect.BodyPart);
-            Logger.LogWarning("The Effect Strength is: " + effect.Strength);*/
+            Logger.LogWarning("The Effect Strength is: " + effect.Strength);
+#endif
+            //if (effect.Type == typeof(GInterface245) || effect.Type == typeof(GInterface259) || effect.Type == typeof(GInterface244))
 
-            if (effect.Type == typeof(GInterface245) || effect.Type == typeof(GInterface259) || effect.Type == typeof(GInterface244))
+            //grabbed this from remove negative effects method
+            if (!(effect is GInterface237) && !(effect is GInterface238))
             {
                 //GInterface244 is bleeding
                 //GInterface245 is fracture
                 //GInterface259 is pain
 
-                healthController.RemoveEffectFromList((ActiveHealthController.GClass2415)effect);
-                Logger.LogWarning("Effect is a Fracture, Bleeding, or Pain and has been removed");
+                healthController.RemoveEffectFromList((AbstractIEffect)effect);
+#if DEBUG
+                Logger.LogDebug("Effect is a Fracture, Bleeding, or Pain and has been removed");
+#endif
             }
         }
 
