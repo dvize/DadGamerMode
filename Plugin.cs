@@ -8,7 +8,7 @@ using EFT;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.1")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.2")]
     //[BepInDependency("com.spt-aki.core", "3.8.0")]
     public class dadGamerPlugin : BaseUnityPlugin
     {

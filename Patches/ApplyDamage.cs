@@ -56,32 +56,19 @@ namespace dvize.DadGamerMode.Patches
                         damage = damage * ((float)dadGamerPlugin.CustomHeadDamageModeVal.Value / 100);
                     }
 
-                    //if keep 1 health enabled, set damage to 0 
-                    if (dadGamerPlugin.Keep1Health.Value &&
-                        ((currentHealth.Current - damage) <= 2f))
+                    //if keep 1 health enabled, ensure health does not drop below 1
+                    if (dadGamerPlugin.Keep1Health.Value)
                     {
-                        if (dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax")
-                        {
-                            if (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest)
-                            {
-                                    return false;
-                            }
-                            // Still allow other parts to be destroyed, but not overdamage the head/thorax
-                            else
-                            {
-                                if (currentHealth.AtMinimum)
-                                {
-                                    Logger.LogDebug("Destroyed body part: " + bodyPart.ToString());
-                                    healthController.DestroyBodyPart(bodyPart, EDamageType.Bullet);
+                        float potentialNewHealth = currentHealth.Current - damage;
 
-                                    return false;
-                                }
-                            }
-                        }
-                        //Check if they want to keep head and thorax at 1 health or all body parts
-                        else if (dadGamerPlugin.Keep1HealthSelection.Value == "All")
+                        // Check if this damage would bring health below 2f
+                        if (potentialNewHealth < 2f)
                         {
+                            if ((dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax" && (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest)) || dadGamerPlugin.Keep1HealthSelection.Value == "All")
+                            {
+                                damage = 0f;
                                 return false;
+                            }
                         }
                     }
                 }
