@@ -72,16 +72,19 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             //if (effect.Type == typeof(GInterface245) || effect.Type == typeof(GInterface259) || effect.Type == typeof(GInterface244))
 
             //grabbed this from remove negative effects method
-            if (!(effect is GInterface237) && !(effect is GInterface238))
+            if (dadGamerPlugin.CODModeToggle.Value)
             {
-                //GInterface244 is bleeding
-                //GInterface245 is fracture
-                //GInterface259 is pain
+                if (!(effect is GInterface237) && !(effect is GInterface238))
+                {
+                    //GInterface244 is bleeding
+                    //GInterface245 is fracture
+                    //GInterface259 is pain
 
-                healthController.RemoveEffectFromList((AbstractIEffect)effect);
+                    healthController.RemoveEffectFromList((AbstractIEffect)effect);
 #if DEBUG
                 Logger.LogDebug("Effect is a Fracture, Bleeding, or Pain and has been removed");
 #endif
+                }
             }
         }
 
