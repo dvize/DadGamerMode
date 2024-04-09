@@ -72,7 +72,7 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             //if (effect.Type == typeof(GInterface245) || effect.Type == typeof(GInterface259) || effect.Type == typeof(GInterface244))
 
             //grabbed this from remove negative effects method
-            if (dadGamerPlugin.CODModeToggle.Value)
+            if (dadGamerPlugin.CODModeToggle.Value && !dadGamerPlugin.CODBleedingDamageToggle.Value)
             {
                 if (!(effect is GInterface237) && !(effect is GInterface238))
                 {
