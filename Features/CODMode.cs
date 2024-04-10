@@ -69,14 +69,14 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             Logger.LogWarning("The BodyPart is: " + effect.BodyPart);
             Logger.LogWarning("The Effect Strength is: " + effect.Strength);
 #endif
-            //if (effect.Type == typeof(GInterface245) || effect.Type == typeof(GInterface259) || effect.Type == typeof(GInterface244))
 
             //grabbed this from remove negative effects method
             if (dadGamerPlugin.CODModeToggle.Value && !dadGamerPlugin.CODBleedingDamageToggle.Value)
             {
                 if (!(effect is GInterface237) && !(effect is GInterface238))
                 {
-                    //GInterface244 is bleeding
+                    //GInterface242 is Light Bleeding
+                    //GInterface243 is Heavy Bleeding
                     //GInterface245 is fracture
                     //GInterface259 is pain
 
@@ -120,12 +120,17 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
 
                 foreach (var limb in bodyPartsDict)
                 {
-                    currentHealth = healthController.Dictionary_0[limb].Health;
+                    //if bleeding damage is not enabled, repair the limb
 
-                    if (!currentHealth.AtMaximum)
+                    currentHealth = healthController.Dictionary_0[limb].Health;
+                    //bool isBleeding = healthController.FindActiveEffect<GInterface242>(limb) != null || healthController.FindActiveEffect<GInterface243>(limb) != null;
+
+                    if (!currentHealth.AtMaximum && !healthController.Dictionary_0[limb].IsDestroyed)
                     {
                         currentHealth.Current += newHealRate;
                     }
+
+                    
                 }
             }
         }

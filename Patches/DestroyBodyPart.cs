@@ -13,10 +13,9 @@ namespace dvize.DadGamerMode.Patches
         private static readonly EBodyPart[] critBodyParts = { EBodyPart.Stomach, EBodyPart.Head, EBodyPart.Chest };
         private static DamageInfo tmpDmg;
         private static ActiveHealthController healthController;
-        private static EFT.HealthSystem.ValueStruct currentHealth;
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(ActiveHealthController), "DestroyBodyPart");
+            return AccessTools.Method(typeof(ActiveHealthController), nameof(ActiveHealthController.DestroyBodyPart));
         }
 
         [PatchPrefix]
@@ -28,9 +27,6 @@ namespace dvize.DadGamerMode.Patches
                 if (__instance.Player != null
                     && __instance.Player.IsYourPlayer)
                 {
-                    //get the component HealthListener
-                    healthController = __instance.Player.ActiveHealthController;
-                    currentHealth = healthController.GetBodyPartHealth(bodyPart, false);
 
                     //if CODMode is enabled and bleeding damage is disabled
                     if (dadGamerPlugin.CODModeToggle.Value &&
