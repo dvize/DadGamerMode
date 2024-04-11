@@ -14,20 +14,20 @@ namespace dvize.DadGamerMode.Patches
         protected override MethodBase GetTargetMethod()
         {
 
-            return AccessTools.Method(typeof(GClass681), nameof(GClass681.UpdateWeightLimits));
+            return AccessTools.Method(typeof(Physical), nameof(Physical.UpdateWeightLimits));
         }
 
         [PatchPrefix]
-        static bool Prefix(GClass681 __instance)
+        static bool Prefix(Physical __instance)
         {
             // Accessing a protected field
-            var iobserverToPlayerBridge_0 = AccessTools.FieldRefAccess<GClass681, GClass681.IObserverToPlayerBridge>(__instance, "iobserverToPlayerBridge_0");
-            var bool_7 = AccessTools.FieldRefAccess<GClass681, bool>(__instance, "bool_7");
+            var iobserverToPlayerBridge_0 = AccessTools.FieldRefAccess<Physical, Physical.IObserverToPlayerBridge>(__instance, "iobserverToPlayerBridge_0");
+            var bool_7 = AccessTools.FieldRefAccess<Physical, bool>(__instance, "bool_7");
 
             //use our modifier for weight
             if (!bool_7 && iobserverToPlayerBridge_0.iPlayer.IsYourPlayer)
             {
-                BackendConfigSettingsClass.GClass1368 stamina = Singleton<BackendConfigSettingsClass>.Instance.Stamina;
+                BackendConfigSettingsClass.StaminaParameters stamina = Singleton<BackendConfigSettingsClass>.Instance.Stamina;
                 float num = iobserverToPlayerBridge_0.Skills.CarryingWeightRelativeModifier
                             * iobserverToPlayerBridge_0.iPlayer.HealthController.CarryingWeightRelativeModifier
                             * (1 + (dadGamerPlugin.totalWeightReductionPercentage.Value / 100f));

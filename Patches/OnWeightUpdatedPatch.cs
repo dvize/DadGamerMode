@@ -15,17 +15,17 @@ namespace dvize.DadGamerMode.Patches
         protected override MethodBase GetTargetMethod()
         {
 
-            return AccessTools.Method(typeof(GClass681), nameof(GClass681.OnWeightUpdated));
+            return AccessTools.Method(typeof(Physical), nameof(Physical.OnWeightUpdated));
         }
 
         [PatchPrefix]
-        static bool Prefix(GClass681 __instance)
+        static bool Prefix(Physical __instance)
         {
-            var iobserverToPlayerBridge_0 = AccessTools.FieldRefAccess<GClass681, GClass681.IObserverToPlayerBridge>(__instance, "iobserverToPlayerBridge_0");
+            var iobserverToPlayerBridge_0 = AccessTools.FieldRefAccess<Physical, Physical.IObserverToPlayerBridge>(__instance, "iobserverToPlayerBridge_0");
             
             if (iobserverToPlayerBridge_0.iPlayer.IsYourPlayer)
             {
-                var float_3 = AccessTools.FieldRefAccess<GClass681, float>(__instance, "float_3");
+                var float_3 = AccessTools.FieldRefAccess<Physical, float>(__instance, "float_3");
 
                 //modify the weight by our totalWeightReductionPercentage(int converted to percentage)
                 float totalWeight = iobserverToPlayerBridge_0.TotalWeight * (dadGamerPlugin.totalWeightReductionPercentage.Value / 100f);
