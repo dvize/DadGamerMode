@@ -29,20 +29,16 @@ namespace dvize.DadGamerMode.Patches
             //original functionality
             __result = slots.Select(new Func<Slot, Item>(EquipmentClass.Class2073.class2073_0.method_1)).Sum(new Func<Item, float>(__instance.method_12));
 
+            // Get the total weight reduction setting
             float totalWeightReduction = dadGamerPlugin.totalWeightReductionPercentage.Value;
+
+            // Convert it into a reduction factor: 0% -> full reduction (factor = 0), 100% -> no reduction (factor = 1)
             float reductionFactor = totalWeightReduction / 100f;
 
-            // only if the percentage is greater than 0
-            if (totalWeightReduction > 0)
-            {
-                __result *= (1 - reductionFactor); 
-            }
-            else
-            {
-                __result = 0;
-            }
+            // Apply the reduction factor
+            __result *= reductionFactor;
 
-            return false;
+            return false; // false to skip original method after prefix
         }
     }
 
