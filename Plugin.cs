@@ -8,7 +8,7 @@ using EFT;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.2")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.4")]
     //[BepInDependency("com.spt-aki.core", "3.8.0")]
     public class dadGamerPlugin : BaseUnityPlugin
     {
@@ -82,7 +82,7 @@ namespace dvize.GodModeTest
             get; set;
         }
 
-        public static ConfigEntry<int> enemyDamageMultiplier
+        public static ConfigEntry<float> enemyDamageMultiplier
         {
             get; set;
         }
@@ -143,17 +143,16 @@ namespace dvize.GodModeTest
             ReloadSpeed = Config.Bind("3. QOL", "ReloadSpeed", 0.85f, new ConfigDescription("Magazine Reload Speed Multiplier (smaller is faster)",
                 new AcceptableValueRange<float>(0f, 0.85f), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 3 }));
 
-            enemyDamageMultiplier = Config.Bind("3. QOL", "Enemy Damage Multiplier", 1, new ConfigDescription("Multiply Damage Given to Enemies (Default is 1)",
-                new AcceptableValueRange<int>(1, 20), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 2 }));
+            enemyDamageMultiplier = Config.Bind("3. QOL", "Enemy Damage Multiplier", 1f, new ConfigDescription("Multiply Damage Given to Enemies (Default is 1)",
+                new AcceptableValueRange<float>(1, 20), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 2 }));
 
-            totalWeightReductionPercentage = Config.Bind("3. QOL", "Total Weight % Reduction", 0, new ConfigDescription("Percentage to reduce your characters total weight",
+            totalWeightReductionPercentage = Config.Bind("3. QOL", "Item Total Weight % (100 is normal)", 100, new ConfigDescription("Percentage to reduce the items total weight. Must set before raid",
                 new AcceptableValueRange<int>(0, 100), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
 
             new NewGamePatch().Enable();
             new DadGamerMode.Patches.ApplyDamage().Enable();
             new DadGamerMode.Patches.DestroyBodyPartPatch().Enable();
-            //new DadGamerMode.Patches.OnWeightUpdatedPatch().Enable();
-            //new DadGamerMode.Patches.UpdateWeightLimitsPatch().Enable();
+            new DadGamerMode.Patches.OnWeightUpdatedPatch().Enable();
         }
 
         internal class NewGamePatch : ModulePatch

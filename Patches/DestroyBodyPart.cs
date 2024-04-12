@@ -50,16 +50,9 @@ namespace dvize.DadGamerMode.Patches
                     //if keep1Health is enabled
                     if (dadGamerPlugin.Keep1Health.Value)
                     {
-                        if (dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax")
+                        if (dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax" && (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest))
                         {
-                            if (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest)
-                            {
-                                return false;
-                            }
-                            else
-                            {
-                                return true;
-                            }
+                            return false;
                         }
                         else if (dadGamerPlugin.Keep1HealthSelection.Value == "All")
                         {

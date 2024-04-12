@@ -2,7 +2,6 @@
 using System.Reflection;
 using Aki.Reflection.Patching;
 using dvize.GodModeTest;
-using EFT;
 using EFT.HealthSystem;
 using HarmonyLib;
 
@@ -12,6 +11,7 @@ namespace dvize.DadGamerMode.Patches
     {
         private static ActiveHealthController healthController;
         private static EFT.HealthSystem.ValueStruct currentHealth;
+        private static bool potentialHealthLowerThanMinimum;
         protected override MethodBase GetTargetMethod()
         {
             return AccessTools.Method(typeof(ActiveHealthController), "ApplyDamage");
@@ -59,23 +59,37 @@ namespace dvize.DadGamerMode.Patches
                     //if keep 1 health enabled, ensure health does not drop below 1
                     if (dadGamerPlugin.Keep1Health.Value)
                     {
-                        float potentialNewHealth = currentHealth.Current - damage;
+                        potentialHealthLowerThanMinimum = (currentHealth.Current - damage) <= currentHealth.Minimum;
 
-                        // Check if this damage would bring health below 2f
-                        if (potentialNewHealth < 2f)
+                        // Check if this damage would bring health below 3f
+                        if (potentialHealthLowerThanMinimum)
                         {
-                            if ((dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax" && (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest)) || dadGamerPlugin.Keep1HealthSelection.Value == "All")
+                            if ((dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax" && (bodyPart == EBodyPart.Head || bodyPart == EBodyPart.Chest)))
                             {
                                 damage = 0f;
+                                currentHealth.Current = 3f;
+                                return false;
+                            }
+
+                            else if (dadGamerPlugin.Keep1HealthSelection.Value == "All")
+                            {
+                                damage = 0f;
+                                currentHealth.Current = 3f;
                                 return false;
                             }
                         }
+                    }
+
+                    //add check if bodypart at minimum for non-critical parts as it can still kill you
+                    if (currentHealth.AtMinimum && (dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax" || dadGamerPlugin.Keep1HealthSelection.Value == "All"))
+                    {
+                        return false;
                     }
                 }
                 else
                 {
                     //multiply damage by multiplier if a type of player
-                    if(__instance.Player != null)
+                    if (__instance.Player != null)
                     {
                         damage = damage * dadGamerPlugin.enemyDamageMultiplier.Value;
                     }
