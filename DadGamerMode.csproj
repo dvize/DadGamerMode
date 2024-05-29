@@ -63,6 +63,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>F:\SPT-AKI-DEV\EscapeFromTarkov_Data\Managed\Comfort.Unity.dll</HintPath>
     </Reference>
+    <Reference Include="CommonExtensions, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>F:\SPT-AKI-DEV\EscapeFromTarkov_Data\Managed\CommonExtensions.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -98,6 +102,8 @@
     <Compile Include="Features\MagReloadSpeed.cs" />
     <Compile Include="Patches\ApplyDamage.cs" />
     <Compile Include="Patches\DestroyBodyPart.cs" />
+    <Compile Include="Patches\InstantConstructionPatch.cs" />
+    <Compile Include="Patches\InstantProductionPatch.cs" />
     <Compile Include="Patches\OnWeightUpdatedPatch.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

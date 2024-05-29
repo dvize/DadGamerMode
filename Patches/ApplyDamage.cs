@@ -80,8 +80,11 @@ namespace dvize.DadGamerMode.Patches
                         }
                     }
 
-                    //add check if bodypart at minimum for non-critical parts as it can still kill you
-                    if (currentHealth.AtMinimum && (dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax" || dadGamerPlugin.Keep1HealthSelection.Value == "All"))
+                    //add check if bodypart at minimum for non-critical parts as it can still kill you and CODMode is not enabled
+                    if (currentHealth.AtMinimum && 
+                        (dadGamerPlugin.Keep1HealthSelection.Value == "Head And Thorax" || dadGamerPlugin.Keep1HealthSelection.Value == "All") &&
+                        !dadGamerPlugin.CODModeToggle.Value
+                        )
                     {
                         return false;
                     }

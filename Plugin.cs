@@ -3,12 +3,14 @@ using System.Reflection;
 using Aki.Reflection.Patching;
 using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using dvize.DadGamerMode.Features;
 using EFT;
+using HarmonyLib;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.4")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.5")]
     //[BepInDependency("com.spt-aki.core", "3.8.0")]
     public class dadGamerPlugin : BaseUnityPlugin
     {
@@ -77,6 +79,14 @@ namespace dvize.GodModeTest
         {
             get; set;
         }
+        public static ConfigEntry<bool> InstantProductionEnabled
+        {
+            get; set;
+        }
+        public static ConfigEntry<bool> InstantConstructionEnabled
+        {
+            get; set;
+        }
         public static ConfigEntry<float> ReloadSpeed
         {
             get; set;
@@ -88,6 +98,11 @@ namespace dvize.GodModeTest
         }
 
         public static ConfigEntry<int> totalWeightReductionPercentage
+        {
+            get; set;
+        }
+
+        internal static ManualLogSource Logger
         {
             get; set;
         }
@@ -129,16 +144,22 @@ namespace dvize.GodModeTest
                 null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
 
             NoFallingDamage = Config.Bind("3. QOL", "No Falling Damage", false, new ConfigDescription("No Falling Damage",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 7 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 9 }));
 
             MaxStaminaToggle = Config.Bind("3. QOL", "Infinite Stamina", false, new ConfigDescription("Stamina Never Drains",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 6 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 8 }));
 
             MaxEnergyToggle = Config.Bind("3. QOL", "Infinite Energy", false, new ConfigDescription("Energy Never Drains so no eating",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 5 }));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 7 }));
 
             MaxHydrationToggle = Config.Bind("3. QOL", "Infinite Hydration", false, new ConfigDescription("Hydration never drains so no drinking",
-                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4}));
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 6}));
+
+            InstantProductionEnabled = Config.Bind("3. QOL", "Instant Production", false, new ConfigDescription("Produce Items Instantly",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 5 }));
+
+            InstantConstructionEnabled = Config.Bind("3. QOL", "Instant Construction", false, new ConfigDescription("Construct Hideout Upgrades Instantly",
+                null, new ConfigurationManagerAttributes { IsAdvanced = false, Order = 4 }));
 
             ReloadSpeed = Config.Bind("3. QOL", "ReloadSpeed", 0.85f, new ConfigDescription("Magazine Reload Speed Multiplier (smaller is faster)",
                 new AcceptableValueRange<float>(0f, 0.85f), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 3 }));
@@ -149,10 +170,24 @@ namespace dvize.GodModeTest
             totalWeightReductionPercentage = Config.Bind("3. QOL", "Item Total Weight % (100 is normal)", 100, new ConfigDescription("Percentage to reduce the items total weight. Must set before raid",
                 new AcceptableValueRange<int>(0, 100), new ConfigurationManagerAttributes { IsAdvanced = false, Order = 1 }));
 
+            if (Logger == null)
+            {
+                Logger = BepInEx.Logging.Logger.CreateLogSource("DadGamerMode");
+            }
+
             new NewGamePatch().Enable();
             new DadGamerMode.Patches.ApplyDamage().Enable();
             new DadGamerMode.Patches.DestroyBodyPartPatch().Enable();
             new DadGamerMode.Patches.OnWeightUpdatedPatch().Enable();
+
+            //instant production patches
+            new DadGamerMode.Patches.InstantUpdatePatch().Enable();
+            new DadGamerMode.Patches.InstantStartProducingPatch().Enable();
+
+            //instant hideout upgrade patches
+            new DadGamerMode.Patches.InstantConstructionPatch().Enable();
+
+
         }
 
         internal class NewGamePatch : ModulePatch
