@@ -10,7 +10,7 @@ using HarmonyLib;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.5")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.6")]
     //[BepInDependency("com.spt-aki.core", "3.8.0")]
     public class dadGamerPlugin : BaseUnityPlugin
     {

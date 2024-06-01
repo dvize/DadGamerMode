@@ -116,10 +116,14 @@
   <PropertyGroup>
     <PostBuildEvent>copy "$(TargetPath)" "F:\SPT-AKI-DEV\BepInEx\plugins\$(TargetName).dll"
 
-if $(ConfigurationName) == Debug (
+if "$(ConfigurationName)" == "Debug" (
     copy "$(TargetDir)$(TargetName).pdb" "F:\SPT-AKI-DEV\BepInEx\plugins\$(TargetName).pdb"
 ) else (
     del "F:\SPT-AKI-DEV\BepInEx\plugins\$(TargetName).pdb"
+)
+
+if "$(ConfigurationName)" == "Release" (
+    powershell -ExecutionPolicy Bypass -NoProfile -NonInteractive -File "$(ProjectDir)PackageMods.ps1" -ConfigurationName "$(ConfigurationName)" -TargetPath "$(TargetPath)" -TargetName "$(TargetName)" -TargetDir "$(TargetDir)" 
 )
 </PostBuildEvent>
   </PropertyGroup>
