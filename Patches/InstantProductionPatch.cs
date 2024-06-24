@@ -77,31 +77,43 @@ namespace dvize.DadGamerMode.Patches
             Class1638Field = AccessTools.Field(typeof(GClass1921), "class1638_0");
             ProgressField = AccessTools.Field(typeof(GClass1921.Class1638), "double_1");
         }
+
         public static void CompleteProduction(this GClass1915 __instance, GClass1921 producingItem, GClass1922 scheme)
         {
-            var class1638Instance = Class1638Field.GetValue(producingItem);
-
-            // Set the Progress field to 1.0 (complete)
-            ProgressField.SetValue(class1638Instance, 1.0);
-
-            Item item = __instance.CreateCompleteItem(scheme);
-
-            // Check if the SchemeId exists in the dictionary before calling BeforeProductionComplete
-            if (__instance.ProducingItems.ContainsKey(producingItem.SchemeId))
+            try
             {
-                __instance.BeforeProductionComplete(producingItem.SchemeId);
-                __instance.CompleteItemsStorage.AddItem(scheme._id, item);
-                __instance.ProducingItems.Remove(producingItem.SchemeId);
-                __instance.SetDetailsData();
+                var class1638Instance = Class1638Field.GetValue(producingItem);
+
+                // Set the Progress field to 1.0 (complete)
+                ProgressField.SetValue(class1638Instance, 1.0);
+
+                Item item = __instance.CreateCompleteItem(scheme);
+
+                // Check if the SchemeId exists in the dictionary before calling BeforeProductionComplete
+                if (__instance.ProducingItems.ContainsKey(producingItem.SchemeId))
+                {
+                    __instance.BeforeProductionComplete(producingItem.SchemeId);
+                    __instance.CompleteItemsStorage.AddItem(scheme._id, item);
+                    __instance.ProducingItems.Remove(producingItem.SchemeId);
+                    __instance.SetDetailsData();
+                }
+                else
+                {
+                    dadGamerPlugin.Logger.LogError($"SchemeId {producingItem.SchemeId} not found in ProducingItems for {item.LocalizedName()}");
+                }
             }
-            else
+            catch (KeyNotFoundException ex)
             {
-                dadGamerPlugin.Logger.LogError($"SchemeId {producingItem.SchemeId} not found in ProducingItems for {item.LocalizedName()}");
+                //dadGamerPlugin.Logger.LogError($"KeyNotFoundException: The given key {producingItem.SchemeId} was not present in the dictionary. Exception: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+               //dadGamerPlugin.Logger.LogError($"Unexpected error during CompleteProduction: {ex.Message}");
             }
         }
     }
 
 
 
-    
+
 }

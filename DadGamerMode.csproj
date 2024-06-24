@@ -97,9 +97,9 @@
     <Compile Include="Features\CODMode.cs" />
     <Compile Include="Features\Hydration.cs" />
     <Compile Include="Features\Energy.cs" />
+    <Compile Include="Features\MagReloadSpeed.cs" />
     <Compile Include="Features\MaxStamina.cs" />
     <Compile Include="Features\FallingDamage.cs" />
-    <Compile Include="Features\MagReloadSpeed.cs" />
     <Compile Include="Patches\ApplyDamage.cs" />
     <Compile Include="Patches\DestroyBodyPart.cs" />
     <Compile Include="Patches\InstantConstructionPatch.cs" />
@@ -123,9 +123,8 @@ if "$(ConfigurationName)" == "Debug" (
 )
 
 if "$(ConfigurationName)" == "Release" (
-    powershell -ExecutionPolicy Bypass -NoProfile -NonInteractive -File "$(ProjectDir)PackageMods.ps1" -ConfigurationName "$(ConfigurationName)" -TargetPath "$(TargetPath)" -TargetName "$(TargetName)" -TargetDir "$(TargetDir)" 
-)
-</PostBuildEvent>
+    powershell -ExecutionPolicy Bypass -NoProfile -NonInteractive -File "$(ProjectDir)PackageMods.ps1" -ConfigurationName "$(ConfigurationName)" -TargetPath "F:\SPT-AKI-DEV\BepInEx\plugins\$(TargetName).dll" -TargetName "$(TargetName)" -TargetDir "F:\SPT-AKI-DEV\BepInEx\plugins"
+)</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>FOR /F %25%25x IN ('tasklist /NH /FI "IMAGENAME eq EscapeFromTarkov.exe"') DO IF %25%25x == EscapeFromTarkov.exe (

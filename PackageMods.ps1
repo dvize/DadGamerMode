@@ -1,87 +1,112 @@
 param (
+    [string]$ConfigurationName,
     [string]$TargetPath,
     [string]$TargetName,
-    [string]$TargetDir,
-    [string]$ConfigurationName,
-    [string]$DestinationRoot = "F:\SPT-AKI-DEV\BepInEx\plugins",
-	[string]$SourceFilePath = "C:\Users\dvize\Desktop\repos\SPT-Tarkov\Projects\DadGamerMode\Plugin.cs"  # Adjust this path as needed
+    [string]$TargetDir
 )
 
-Write-Output "TargetPath: $TargetPath"
-Write-Output "TargetName: $TargetName"
-Write-Output "TargetDir: $TargetDir"
-Write-Output "ConfigurationName: $ConfigurationName"
-Write-Output "DestinationRoot: $DestinationRoot"
-Write-Output "SourceFilePath: $SourceFilePath"
+# Define the base directory
+$baseDir = "F:\SPT-AKI-DEV\BepInEx\plugins"
 
-# Extract version from the source file
-$versionPattern = '\[BepInPlugin\(".*?", ".*?", "(.*?)"\)\]'
-$version = Select-String -Path $SourceFilePath -Pattern $versionPattern | ForEach-Object {
-    if ($_ -match $versionPattern) {
-        return $matches[1]
-    }
+# Function to log messages to the console
+function Log {
+    param (
+        [string]$message
+    )
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    Write-Host "$timestamp - $message"
 }
 
-if (-not $version) {
-    Write-Error "Version information not found in the source file."
-    exit 1
-}
+Log "Script started"
+Log "ConfigurationName: $ConfigurationName"
+Log "TargetPath: $TargetPath"
+Log "TargetName: $TargetName"
+Log "TargetDir: $TargetDir"
 
-Write-Output "Extracted Version: $version"
+# Get the assembly version
+$assembly = [System.Reflection.Assembly]::LoadFile($TargetPath)
+$version = $assembly.GetName().Version.ToString()
+Log "Assembly version: $version"
 
-# Define the source and destination paths
-$sourceDll = "$TargetPath"
-$destinationDll = "$DestinationRoot\$TargetName.dll"
-$zipFileName = "$TargetName$version.zip"
-$zipPath = "$DestinationRoot\$zipFileName"
+# Determine the directory of the deployed DLL
+$deployDir = Split-Path -Parent $TargetPath
+Log "DeployDir: $deployDir"
 
-# Copy the DLL file
-Copy-Item -Path $sourceDll -Destination $destinationDll -Force
+# Check if the deploy directory is the base directory or one level further
+if ($deployDir -ne $baseDir) {
+    $relativePath = $deployDir.Substring($baseDir.Length + 1) # Get the relative path beyond the base directory
+    Log "RelativePath: $relativePath"
+    if (($relativePath -split '\\').Count -eq 1) { # Check if it's exactly one directory level further
+        $directoryName = (Get-Item $deployDir).Name
+        $zipPath = "F:\SPT-AKI-DEV\BepInEx\plugins\$directoryName-v$version.zip"
+        Log "DirectoryName: $directoryName"
+        Log "ZipPath: $zipPath"
 
-# Handle the PDB file based on the configuration
-if ($ConfigurationName -eq "Debug") {
-    $sourcePdb = "$TargetDir\$TargetName.pdb"
-    $destinationPdb = "$DestinationRoot\$TargetName.pdb"
-    Copy-Item -Path $sourcePdb -Destination $destinationPdb -Force
-} else {
-    $destinationPdb = "$DestinationRoot\$TargetName.pdb"
-    Remove-Item -Path $destinationPdb -ErrorAction SilentlyContinue
-}
-
-# Only run the packaging for Release configuration
-if ($ConfigurationName -eq "Release") {
-    # Check if there is an additional folder
-    $subFolders = Get-ChildItem -Path $DestinationRoot -Directory
-    $additionalFolder = $null
-    foreach ($folder in $subFolders) {
-        if (Test-Path -Path "$folder\$TargetName.dll") {
-            $additionalFolder = $folder
-            break
+        # Remove existing zip file if it exists
+        if (Test-Path $zipPath) {
+            Log "ZipPath exists, removing"
+            Remove-Item $zipPath -Force
         }
-    }
 
-    $tempDir = Join-Path -Path $env:TEMP -ChildPath "temp"
-    $bepinexDir = Join-Path -Path $tempDir -ChildPath "BepInEx"
-    $pluginsDir = Join-Path -Path $bepinexDir -ChildPath "plugins"
+        # Create the temp directory structure
+        $tempZipDir = "F:\SPT-AKI-DEV\tempZip"
+        if (Test-Path $tempZipDir) {
+            Log "TempZipDir exists, removing"
+            Remove-Item $tempZipDir -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $tempZipDir
+        Log "TempZipDir created: $tempZipDir"
 
-    if ($null -eq $additionalFolder) {
-        # No additional folder, package the DLL directly
-        New-Item -ItemType Directory -Path $bepinexDir -Force
-        New-Item -ItemType Directory -Path $pluginsDir -Force
-        Copy-Item -Path $destinationDll -Destination "$pluginsDir\$TargetName.dll" -Force
+        $newZipStructure = Join-Path $tempZipDir "Bepinex\plugins\$directoryName"
+        New-Item -ItemType Directory -Path $newZipStructure -Force
+        Log "New zip structure directory created: $newZipStructure"
+
+        # Copy files to the new zip structure
+        Copy-Item -Path "$TargetDir\*" -Destination $newZipStructure -Recurse -Force
+        Log "Files copied to new zip structure"
+
+        # Create the final zip file
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($tempZipDir, $zipPath)
+        Log "Final zip file created: $zipPath"
+
+        # Clean up temp directory
+        Remove-Item $tempZipDir -Recurse -Force
+        Log "TempZipDir removed"
     } else {
-        # Additional folder found, package with the folder
-        $additionalFolderName = Split-Path -Leaf $additionalFolder
-        $destinationAdditionalFolder = Join-Path -Path $pluginsDir -ChildPath $additionalFolderName
-        New-Item -ItemType Directory -Path $bepinexDir -Force
-        New-Item -ItemType Directory -Path $destinationAdditionalFolder -Force
-        Copy-Item -Path $destinationDll -Destination "$destinationAdditionalFolder\$TargetName.dll" -Force
+        Log "RelativePath is not one directory level further"
+    }
+} else {
+    $zipPath = "F:\SPT-AKI-DEV\BepInEx\plugins\$TargetName-v$version.zip"
+    Log "ZipPath: $zipPath"
+
+    # Remove existing zip file if it exists
+    if (Test-Path $zipPath) {
+        Log "ZipPath exists, removing"
+        Remove-Item $zipPath -Force
     }
 
-    Compress-Archive -Path "$tempDir\*" -DestinationPath $zipPath -Force
+    # Create the temp directory structure
+    $tempZipDir = "F:\SPT-AKI-DEV\tempZip"
+    if (Test-Path $tempZipDir) {
+        Log "TempZipDir exists, removing"
+        Remove-Item $tempZipDir -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $tempZipDir
+    Log "TempZipDir created: $tempZipDir"
 
-    # Clean up temporary files
-    Remove-Item -Path "$tempDir" -Recurse -Force -ErrorAction SilentlyContinue
+    # Copy the single DLL to the temp directory
+    Copy-Item -Path $TargetPath -Destination $tempZipDir -Force
+    Log "DLL copied to temp directory"
+
+    # Create the final zip file
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::CreateFromDirectory($tempZipDir, $zipPath)
+    Log "Final zip file created: $zipPath"
+
+    # Clean up temp directory
+    Remove-Item $tempZipDir -Recurse -Force
+    Log "TempZipDir removed"
 }
 
-Write-Output "Packaging completed."
+Log "Script finished"
