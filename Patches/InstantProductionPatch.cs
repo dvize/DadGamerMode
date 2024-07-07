@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System;
 using System.Reflection;
-using Aki.Reflection.Patching;
+using SPT.Reflection.Patching;
 using dvize.GodModeTest;
 using EFT.InventoryLogic;
 using HarmonyLib;
@@ -14,21 +14,21 @@ using static dvize.GodModeTest.dadGamerPlugin;
 
 namespace dvize.DadGamerMode.Patches
 {
-    //These patches related to production and not hideout upgrades
+    //These patches relate to production and not hideout upgrades
     // Patch for the StartProducing method
     internal class InstantStartProducingPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(GClass1915), nameof(GClass1915.StartProducing));
+            return AccessTools.Method(typeof(GClass1933), nameof(GClass1933.StartProducing));
         }
 
         [PatchPrefix]
-        private static bool Prefix(GClass1915 __instance, GClass1922 scheme)
+        private static bool Prefix(GClass1933 __instance, ProductionBuildAbstractClass scheme)
         {
             if (dadGamerPlugin.InstantProductionEnabled.Value)
             {
-                GClass1921 producingItem = scheme.GetProducingItem(__instance.ProductionSpeedCoefficient, __instance.ReductionCoefficient);
+                GClass1937 producingItem = scheme.GetProducingItem(__instance.ProductionSpeedCoefficient, __instance.ReductionCoefficient);
                 __instance.AddProducingItem(producingItem);
                 __instance.CompleteProduction(producingItem, scheme);
                 return false;
@@ -42,19 +42,19 @@ namespace dvize.DadGamerMode.Patches
     {
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.Method(typeof(GClass1915), nameof(GClass1915.Update));
+            return AccessTools.Method(typeof(GClass1931), nameof(GClass1931.Update));
         }
 
         [PatchPrefix]
-        private static bool Prefix(GClass1915 __instance, float deltaTime)
+        private static bool Prefix(GClass1931 __instance, float deltaTime)
         {
             if (dadGamerPlugin.InstantProductionEnabled.Value)
             {
-                List<KeyValuePair<string, GClass1921>> itemsToComplete = new List<KeyValuePair<string, GClass1921>>(__instance.ProducingItems);
+                List<KeyValuePair<string, GClass1937>> itemsToComplete = new List<KeyValuePair<string, GClass1937>>(__instance.ProducingItems);
 
                 foreach (var kvp in itemsToComplete)
                 {
-                    if (__instance.Schemes.TryGetValue(kvp.Key, out GClass1922 scheme))
+                    if (__instance.Schemes.TryGetValue(kvp.Key, out ProductionBuildAbstractClass scheme))
                     {
                         __instance.CompleteProduction(kvp.Value, scheme);
                     }
@@ -67,25 +67,25 @@ namespace dvize.DadGamerMode.Patches
     }
 
     // Extension method to handle CompleteProduction
-    internal static class GClass1915Extensions
+    internal static class GClass1933Extensions
     {
-        private static readonly FieldInfo Class1638Field;
+        private static readonly FieldInfo Class1666Field;
         private static readonly FieldInfo ProgressField;
 
-        static GClass1915Extensions()
+        static GClass1933Extensions()
         {
-            Class1638Field = AccessTools.Field(typeof(GClass1921), "class1638_0");
-            ProgressField = AccessTools.Field(typeof(GClass1921.Class1638), "double_1");
+            Class1666Field = AccessTools.Field(typeof(GClass1937), "class1666_0");
+            ProgressField = AccessTools.Field(typeof(GClass1937.Class1666), "double_1");
         }
 
-        public static void CompleteProduction(this GClass1915 __instance, GClass1921 producingItem, GClass1922 scheme)
+        public static void CompleteProduction(this GClass1931 __instance, GClass1937 producingItem, ProductionBuildAbstractClass scheme)
         {
             try
             {
-                var class1638Instance = Class1638Field.GetValue(producingItem);
+                var class1666Instance = Class1666Field.GetValue(producingItem);
 
                 // Set the Progress field to 1.0 (complete)
-                ProgressField.SetValue(class1638Instance, 1.0);
+                ProgressField.SetValue(class1666Instance, 1.0);
 
                 Item item = __instance.CreateCompleteItem(scheme);
 
@@ -104,16 +104,12 @@ namespace dvize.DadGamerMode.Patches
             }
             catch (KeyNotFoundException ex)
             {
-                //dadGamerPlugin.Logger.LogError($"KeyNotFoundException: The given key {producingItem.SchemeId} was not present in the dictionary. Exception: {ex.Message}");
+                dadGamerPlugin.Logger.LogError($"KeyNotFoundException: The given key {producingItem.SchemeId} was not present in the dictionary. Exception: {ex.Message}");
             }
             catch (Exception ex)
             {
-               //dadGamerPlugin.Logger.LogError($"Unexpected error during CompleteProduction: {ex.Message}");
+                dadGamerPlugin.Logger.LogError($"Unexpected error during CompleteProduction: {ex.Message}");
             }
         }
     }
-
-
-
-
 }

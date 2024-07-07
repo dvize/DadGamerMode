@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Reflection;
-using Aki.Reflection.Patching;
+using SPT.Reflection.Patching;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -9,8 +9,8 @@ using EFT;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.8.7")]
-    //[BepInDependency("com.spt-aki.core", "3.8.0")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.9.0")]
+    //[BepInDependency("com.SPT.core", "3.8.0")]
     public class dadGamerPlugin : BaseUnityPlugin
     {
         public static ConfigEntry<Boolean> Godmode

@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading;
+﻿using System.Reflection;
 using System.Threading.Tasks;
-using Aki.Reflection.Patching;
-using Comfort.Common;
 using dvize.GodModeTest;
 using EFT.Hideout;
 using HarmonyLib;
+using SPT.Reflection.Patching;
 
 namespace dvize.DadGamerMode.Patches
 {
@@ -45,7 +39,7 @@ namespace dvize.DadGamerMode.Patches
         }
     }
 
-    
 
-    
+
+
 }
