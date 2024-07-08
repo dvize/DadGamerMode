@@ -73,16 +73,18 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             //grabbed this from remove negative effects method
             if (dadGamerPlugin.CODModeToggle.Value && !dadGamerPlugin.CODBleedingDamageToggle.Value)
             {
-                if (!(effect is GInterface237) && !(effect is GInterface238))
+                //if (Singleton<ActiveHealthController.Class1917>.Instance.method_0(effect as AbstractIEffect))
+                if (!(effect is GInterface252) && !(effect is GInterface253))
                 {
-                    //GInterface242 is Light Bleeding
-                    //GInterface243 is Heavy Bleeding
-                    //GInterface245 is fracture
-                    //GInterface259 is pain
+                    //GInterface257is Light Bleeding
+                    //GInterface258 is Heavy Bleeding
+                    //GInterface260 is fracture
+                    //GInterface274 is pain  +15?
+                    //GInterface278 is tremor
 
-                    healthController.RemoveEffectFromList((AbstractIEffect)effect);
+                    healthController.RemoveEffectFromList(effect as AbstractIEffect);
 #if DEBUG
-                Logger.LogDebug("Effect is a Fracture, Bleeding, or Pain and has been removed");
+                    Logger.LogDebug("Effect is a Fracture, Bleeding, or Pain and has been removed");
 #endif
                 }
             }
