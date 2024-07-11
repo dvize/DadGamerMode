@@ -22,6 +22,13 @@ namespace dvize.DadGamerMode.Patches
         {
             if (dadGamerPlugin.InstantConstructionEnabled.Value)
             {
+                if (__instance == null)
+                {
+                    // handle the null instance case
+                    __result = Task.CompletedTask;
+                    return false;
+                }
+
                 __result = InstantCompleteConstruction(__instance, timestamp);
                 return false;
             }
@@ -31,6 +38,13 @@ namespace dvize.DadGamerMode.Patches
         private static async Task InstantCompleteConstruction(AreaData __instance, int timestamp)
         {
             await Task.Yield();
+
+            if (__instance?.CurrentStage == null)
+            {
+                // handle the null CurrentStage case
+                return;
+            }
+
             Stage currentStage = __instance.CurrentStage;
             currentStage.Waiting = false;
             __instance.Status = (__instance.CurrentLevel > 0) ? EAreaStatus.ReadyToInstallUpgrade : EAreaStatus.ReadyToInstallConstruct;
@@ -38,8 +52,4 @@ namespace dvize.DadGamerMode.Patches
             currentStage.ActionReady = true;
         }
     }
-
-
-
-
 }
