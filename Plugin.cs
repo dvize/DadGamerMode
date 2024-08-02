@@ -9,7 +9,7 @@ using EFT;
 
 namespace dvize.GodModeTest
 {
-    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.9.2")]
+    [BepInPlugin("com.dvize.DadGamerMode", "dvize.DadGamerMode", "1.9.3")]
     //[BepInDependency("com.SPT.core", "3.8.0")]
     public class dadGamerPlugin : BaseUnityPlugin
     {
@@ -197,7 +197,6 @@ namespace dvize.GodModeTest
 
             //instant production patches
             new DadGamerMode.Patches.InstantUpdatePatch().Enable();
-            new DadGamerMode.Patches.InstantStartProducingPatch().Enable();
 
             //instant hideout upgrade patches
             new DadGamerMode.Patches.InstantConstructionPatch().Enable();

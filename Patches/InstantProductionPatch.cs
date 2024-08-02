@@ -1,53 +1,13 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
-using SPT.Reflection.Patching;
 using dvize.GodModeTest;
 using EFT.InventoryLogic;
 using HarmonyLib;
-using EFT.Hideout;
-using System.Threading.Tasks;
-using System.Threading;
-using Comfort.Common;
-
-using static dvize.GodModeTest.dadGamerPlugin;
+using SPT.Reflection.Patching;
 
 namespace dvize.DadGamerMode.Patches
 {
-    //These patches relate to production and not hideout upgrades
-    // Patch for the StartProducing method
-    internal class InstantStartProducingPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
-        {
-            return AccessTools.Method(typeof(GClass1933), nameof(GClass1933.StartProducing));
-        }
-
-        [PatchPrefix]
-        private static bool Prefix(GClass1933 __instance, ProductionBuildAbstractClass scheme)
-        {
-            if (dadGamerPlugin.InstantProductionEnabled.Value)
-            {
-                if (__instance == null || scheme == null)
-                {
-                    //dadGamerPlugin.Logger.LogError("InstantStartProducingPatch: __instance or scheme is null.");
-                    return false;
-                }
-
-                GClass1937 producingItem = scheme.GetProducingItem(__instance.ProductionSpeedCoefficient, __instance.ReductionCoefficient);
-                if (producingItem == null)
-                {
-                    //dadGamerPlugin.Logger.LogError("InstantStartProducingPatch: producingItem is null.");
-                    return false;
-                }
-
-                __instance.AddProducingItem(producingItem);
-                __instance.CompleteProduction(producingItem, scheme);
-                return false;
-            }
-            return true;
-        }
-    }
 
     // Patch for the Update method
     internal class InstantUpdatePatch : ModulePatch
@@ -64,11 +24,12 @@ namespace dvize.DadGamerMode.Patches
             {
                 if (__instance == null || __instance.ProducingItems == null)
                 {
-                    //dadGamerPlugin.Logger.LogError("InstantUpdatePatch: __instance or ProducingItems is null.");
                     return false;
                 }
 
+                // Filter itemsToComplete by removing bitcoin farm
                 List<KeyValuePair<string, GClass1937>> itemsToComplete = new List<KeyValuePair<string, GClass1937>>(__instance.ProducingItems);
+                itemsToComplete.RemoveAll(x => x.Key == "5d5589c1f934db045e6c5492" || x.Key == "5d5c205bd582a50d042a3c0e"); //bitcoin and fuel?
 
                 foreach (var kvp in itemsToComplete)
                 {
@@ -76,12 +37,10 @@ namespace dvize.DadGamerMode.Patches
                     {
                         __instance.CompleteProduction(kvp.Value, scheme);
                     }
-                    else
-                    {
-                        //dadGamerPlugin.Logger.LogError($"InstantUpdatePatch: Scheme for key {kvp.Key} not found or __instance.Schemes is null.");
-                    }
                 }
-                return false;
+
+                // Allow normal update processing for Bitcoin items
+                return true;
             }
 
             return true;
@@ -104,7 +63,7 @@ namespace dvize.DadGamerMode.Patches
         {
             if (__instance == null || producingItem == null || scheme == null)
             {
-                //dadGamerPlugin.Logger.LogError("CompleteProduction: __instance, producingItem, or scheme is null.");
+                dadGamerPlugin.Logger.LogError("CompleteProduction: __instance, producingItem, or scheme is null.");
                 return;
             }
 
@@ -113,7 +72,7 @@ namespace dvize.DadGamerMode.Patches
                 var class1666Instance = Class1666Field.GetValue(producingItem);
                 if (class1666Instance == null)
                 {
-                    //dadGamerPlugin.Logger.LogError("CompleteProduction: class1666Instance is null.");
+                    dadGamerPlugin.Logger.LogError("CompleteProduction: class1666Instance is null.");
                     return;
                 }
 
@@ -123,13 +82,22 @@ namespace dvize.DadGamerMode.Patches
                 Item item = __instance.CreateCompleteItem(scheme);
                 if (item == null)
                 {
-                    //dadGamerPlugin.Logger.LogError("CompleteProduction: item is null.");
+                    dadGamerPlugin.Logger.LogError("CompleteProduction: item is null.");
                     return;
+                }
+
+                // Log the current state of the ProducingItems dictionary
+                dadGamerPlugin.Logger.LogInfo("CompleteProduction: Current ProducingItems:");
+                foreach (var kvp in __instance.ProducingItems)
+                {
+                    dadGamerPlugin.Logger.LogInfo($"Key: {kvp.Key}, Value SchemeId: {kvp.Value.SchemeId}");
                 }
 
                 // Check if the SchemeId exists in the dictionary before calling BeforeProductionComplete
                 if (__instance.ProducingItems != null && __instance.ProducingItems.ContainsKey(producingItem.SchemeId))
                 {
+                    dadGamerPlugin.Logger.LogInfo($"CompleteProduction: Found SchemeId {producingItem.SchemeId} in ProducingItems.");
+
                     __instance.BeforeProductionComplete(producingItem.SchemeId);
                     __instance.CompleteItemsStorage.AddItem(scheme._id, item);
                     __instance.ProducingItems.Remove(producingItem.SchemeId);
@@ -137,12 +105,8 @@ namespace dvize.DadGamerMode.Patches
                 }
                 else
                 {
-                    //dadGamerPlugin.Logger.LogError($"SchemeId {producingItem.SchemeId} not found in ProducingItems for {item.LocalizedName()}");
+                    dadGamerPlugin.Logger.LogError($"SchemeId {producingItem.SchemeId} not found in ProducingItems.");
                 }
-            }
-            catch (KeyNotFoundException ex)
-            {
-                dadGamerPlugin.Logger.LogError($"KeyNotFoundException: The given key {producingItem.SchemeId} was not present in the dictionary. Exception: {ex.Message}");
             }
             catch (Exception ex)
             {
