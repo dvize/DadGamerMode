@@ -34,7 +34,7 @@ namespace dvize.DadGamerMode.Features
 
         internal static void Enable()
         {
-            if (Singleton<IBotGame>.Instantiated)
+            if (Singleton<GameWorld>.Instantiated)
             {
                 var gameWorld = Singleton<GameWorld>.Instance;
                 gameWorld.GetOrAddComponent<NoFallingDamageComponent>();

@@ -38,7 +38,7 @@ namespace dvize.DadGamerMode.Features
 
         public static void Enable()
         {
-            if (Singleton<IBotGame>.Instantiated)
+            if (Singleton<GameWorld>.Instantiated)
             {
                 var gameWorld = Singleton<GameWorld>.Instance;
                 gameWorld.GetOrAddComponent<MaxStaminaComponent>();

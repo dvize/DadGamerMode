@@ -19,15 +19,15 @@ namespace dvize.DadGamerMode.Patches
         protected override MethodBase GetTargetMethod()
         {
 
-            return AccessTools.Method(typeof(EquipmentClass), nameof(EquipmentClass.method_10));
+            return AccessTools.Method(typeof(InventoryEquipment), nameof(InventoryEquipment.smethod_1));
         }
 
         [PatchPrefix]
-        internal static bool Prefix(EquipmentClass __instance, ref float __result, IEnumerable<Slot> slots)
+        internal static bool Prefix(InventoryEquipment __instance, ref float __result, IEnumerable<Slot> slots)
         {
 
             //original functionality
-            __result = slots.Select(new Func<Slot, Item>(EquipmentClass.Class2102.class2102_0.method_1)).Sum(new Func<Item, float>(__instance.method_11));
+            __result = slots.Sum(new Func<Slot, float>(InventoryEquipment.Class2246.class2246_0.method_1));
 
             // Get the total weight reduction setting
             float totalWeightReduction = dadGamerPlugin.totalWeightReductionPercentage.Value;

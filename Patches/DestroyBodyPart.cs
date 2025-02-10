@@ -11,7 +11,7 @@ namespace dvize.DadGamerMode.Patches
     internal class DestroyBodyPartPatch : ModulePatch
     {
         private static readonly EBodyPart[] critBodyParts = { EBodyPart.Stomach, EBodyPart.Head, EBodyPart.Chest };
-        private static DamageInfo tmpDmg;
+        private static DamageInfoStruct tmpDmg;
         private static ActiveHealthController healthController;
         protected override MethodBase GetTargetMethod()
         {
@@ -19,13 +19,13 @@ namespace dvize.DadGamerMode.Patches
         }
 
         [PatchPrefix]
-        private static bool Prefix(ActiveHealthController __instance, EBodyPart bodyPart, EDamageType damageType)
+        private static bool Prefix(ActiveHealthController __instance, ref Player ___Player, EBodyPart bodyPart, EDamageType damageType)
         {
             try
             {
                 //only care about your player
-                if (__instance.Player != null
-                    && __instance.Player.IsYourPlayer)
+                if (___Player != null
+                    && ___Player.IsYourPlayer)
                 {
 
                     //if CODMode is enabled and bleeding damage is disabled
