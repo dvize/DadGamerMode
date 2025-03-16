@@ -4,6 +4,7 @@ using SPT.Reflection.Patching;
 using dvize.GodModeTest;
 using EFT.HealthSystem;
 using HarmonyLib;
+using EFT;
 
 namespace dvize.DadGamerMode.Patches
 {
@@ -18,14 +19,15 @@ namespace dvize.DadGamerMode.Patches
         }
 
         [PatchPrefix]
-        private static bool Prefix(ActiveHealthController __instance, ref float damage, EBodyPart bodyPart, DamageInfo damageInfo)
+        private static bool Prefix(ActiveHealthController __instance, ref float damage, ref Player ___Player, EBodyPart bodyPart, DamageInfoStruct damageInfo)
         {
             try
             {
-                if (__instance.Player != null &&
-                __instance.Player.IsYourPlayer)
+                
+                if (___Player != null &&
+                ___Player.IsYourPlayer)
                 {
-                    healthController = __instance.Player.ActiveHealthController;
+                    healthController = ___Player.ActiveHealthController;
                     currentHealth = healthController.GetBodyPartHealth(bodyPart, false);
 
                     //just set damage to 0 and not run apply damage for GodMode
@@ -92,7 +94,7 @@ namespace dvize.DadGamerMode.Patches
                 else
                 {
                     //multiply damage by multiplier if a type of player
-                    if (__instance.Player != null)
+                    if (___Player != null)
                     {
                         damage = damage * dadGamerPlugin.enemyDamageMultiplier.Value;
                     }

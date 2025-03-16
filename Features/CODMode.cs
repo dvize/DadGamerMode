@@ -5,7 +5,7 @@ using EFT;
 using EFT.HealthSystem;
 using UnityEngine;
 
-using AbstractIEffect = EFT.HealthSystem.ActiveHealthController.GClass2429;
+using AbstractIEffect = EFT.HealthSystem.ActiveHealthController.GClass2813;
 
 namespace dvize.DadGamerMode.Features
 {
@@ -13,10 +13,11 @@ namespace dvize.DadGamerMode.Features
     {
         private static Player player;
         private static ActiveHealthController healthController;
+        private static ActiveHealthController.Class2112 someClassWithEffectsCheck;
         private static float timeSinceLastHit = 0f;
         private static bool isRegenerating = false;
         private static float newHealRate;
-        private static DamageInfo tmpDmg;
+        private static DamageInfoStruct tmpDmg;
         private static HealthValue currentHealth;
         private static int frameCount = 0;
 
@@ -36,7 +37,7 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
         }
         internal static void Enable()
         {
-            if (Singleton<IBotGame>.Instantiated)
+            if (Singleton<GameWorld>.Instantiated)
             {
                 var gameWorld = Singleton<GameWorld>.Instance;
                 gameWorld.GetOrAddComponent<CODModeComponent>();
@@ -48,10 +49,11 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
         {
             player = Singleton<GameWorld>.Instance.MainPlayer;
             healthController = player.ActiveHealthController;
+            someClassWithEffectsCheck = new ActiveHealthController.Class2112();
             isRegenerating = false;
             timeSinceLastHit = 0f;
             newHealRate = 0f;
-            tmpDmg = new DamageInfo();
+            tmpDmg = new DamageInfoStruct();
             currentHealth = null;
             frameCount = 0;
 
@@ -73,10 +75,11 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             //grabbed this from remove negative effects method
             if (dadGamerPlugin.CODModeToggle.Value && !dadGamerPlugin.CODBleedingDamageToggle.Value)
             {
-                //if (Singleton<ActiveHealthController.Class1917>.Instance.method_0(effect as AbstractIEffect))
-                if (!(effect is GInterface252) && !(effect is GInterface253))
+                if (someClassWithEffectsCheck.method_1(effect as AbstractIEffect))
+                //if (!(effect is GInterface308) && !(effect is GInterface309))
                 {
-                    //GInterface257is Light Bleeding
+                    //@sugonyak: outdated info below, too lazy to update it, sorry:
+                    //GInterface257 is Light Bleeding
                     //GInterface258 is Heavy Bleeding
                     //GInterface260 is fracture
                     //GInterface274 is pain  +15?
@@ -146,7 +149,7 @@ EBodyPart.LeftLeg, EBodyPart.LeftArm, EBodyPart.RightArm };
             }
         }
 
-        private void Player_BeingHitAction(DamageInfo arg1, EBodyPart arg2, float arg3)
+        private void Player_BeingHitAction(DamageInfoStruct arg1, EBodyPart arg2, float arg3)
         {
             //Logger.LogDebug("DadGamerMode: Player_BeingHitAction called");
             timeSinceLastHit = 0f;
